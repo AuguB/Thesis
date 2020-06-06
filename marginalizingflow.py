@@ -37,7 +37,7 @@ class marginalizingFlow(nn.Module):
             sample = self.eps.sample((A.shape[0],))
             return torch.cat([A, sample], 1), self.eps.log_prob(sample)  # Get new samples from epsilon
         else:
-            return A
+            return A,0
 
     # The log sum exp trick
     def logmean(self, log_probs):

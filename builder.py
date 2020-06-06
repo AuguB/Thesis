@@ -10,28 +10,29 @@ from normalizingflow import *
 import itertools
 
 
-def build_flow(dim, n_layers = 3):
+def build_flow(dim, n_layers=3):
     module_list = []
     for l in range(n_layers):
         module_list.append(actnorm(dim))
         module_list.append(coupling(dim))
-        module_list.append(shuffle(dim)) # Every other shuffle is simply a flip
+        module_list.append(shuffle(dim))  # Every other shuffle is simply a flip
     module_list.pop()
     return normalizingFlow(module_list, dim)
+
 
 def build_px_samples(n_samples, n_epsilons=0, distribution="square_gaussian"):
     if distribution == "square_gaussian":
         # TODO make two independent gaussian columns, and square them both.
         base = torch.randn((n_samples, 1)) ** 2
     elif distribution == "half_moons":
-        base,_ = datasets.make_moons(n_samples, shuffle=True, noise=0.1)
+        base, _ = datasets.make_moons(n_samples, shuffle=True, noise=0.1)
         base = torch.from_numpy(base).type("torch.FloatTensor")
     elif distribution == "blobs":
-        base, _ = datasets.make_blobs(n_samples, centers=[[-4, 4], [-4, -4],[4,4],[4,-4]], shuffle=True)
+        base, _ = datasets.make_blobs(n_samples, centers=[[-4, 4], [-4, -4], [4, 4], [4, -4]], shuffle=True)
         base = torch.from_numpy(base).type("torch.FloatTensor")
     elif distribution == "MNIST":
         base = tds.MNIST('../data', train=True, download=True).data
-        base = base.view(-1,784).type("torch.FloatTensor")
+        base = base.view(-1, 784).type("torch.FloatTensor")
         n_samples = base.shape[0]
     else:
         print("Distribution unknown")
@@ -45,11 +46,13 @@ def build_px_samples(n_samples, n_epsilons=0, distribution="square_gaussian"):
         result = base
     return result
 
+
 def make_top_folder():
     current_test_folder = "/".join([project_folder, runs_folder,
                                     f"run_{datetime.now()}"])
     os.mkdir(current_test_folder)
     return current_test_folder
+
 
 def current_folders(images_folder, models_folder, p, shape_x):
     model_signature = f"{shape_x}_{p}pad"
@@ -57,7 +60,8 @@ def current_folders(images_folder, models_folder, p, shape_x):
     os.mkdir(current_image_folder)
     current_models_folder = "/".join([models_folder, model_signature])
     os.mkdir(current_models_folder)
-    return current_image_folder, current_models_folder,  model_signature
+    return current_image_folder, current_models_folder, model_signature
+
 
 def distribution_folders(current_test_folder, shape_x):
     super_folder = "/".join([current_test_folder, shape_x])
@@ -68,9 +72,22 @@ def distribution_folders(current_test_folder, shape_x):
     os.mkdir(models_folder)
     return images_folder, models_folder
 
-def create_info_files(main_folder, distributions, epsilons, n_repeats):
 
+def create_info_files(main_folder, n_gaussian_dims,
+                      n_epsilons,
+                      n_repeats,
+                      gaussian_max_shifts,
+                      gaussian_powers):
     filename = "/".join([main_folder, "param_dict.p"])
-    dict = {"dists": distributions, "epsilons":epsilons, "n_reps":n_repeats}
-    pickle.dump(dict, open(filename,"wb"))
+    dict = {
+        "n_gaussian_dims": n_gaussian_dims,
+        "n_epsilons": n_epsilons,
+        "n_repeats": n_repeats,
+        "gaussian_max_shifts": gaussian_max_shifts,
+        "gaussian_powers": gaussian_powers}
+    pickle.dump(dict, open(filename, "wb"))
 
+def get_gaussian_samples(n_samples,gaussian_dim,shift, pow):
+    dist = torch.distributions.MultivariateNormal(loc=torch.ones((gaussian_dim))*shift, covariance_matrix=torch.diag(torch.ones((gaussian_dim))))
+    x = dist.sample((n_samples,))**pow
+    return x
