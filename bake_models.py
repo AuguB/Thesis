@@ -22,10 +22,10 @@ n_samples = 2048
 # n_repeats = 1
 #
 n_samples = 2048
-n_epsilons = [0, 1, 2, 4, 8, 16]
-n_gaussian_dims = [2, 4, 8, 16]
-gaussian_powers = [1, 2, 3, 4]
-gaussian_max_shifts = [-1, -0.5, 0, 0.5, 1]
+n_epsilons = [0, 1, 2, 4, 8]
+n_gaussian_dims = [2, 4, 8]
+gaussian_powers = [1, 2, 3]
+gaussian_max_shifts = [-0.5, 0, 0.5]
 n_layers = 8
 n_epochs = 1024
 batch_size = 128
