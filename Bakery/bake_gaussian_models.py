@@ -18,13 +18,13 @@ import math
 # decay = 0.997
 # n_repeats = 3
 
-n_samples = 4096
+n_samples = 2048
 n_epsilons = [0, 1, 2, 4, 8, 16]
 n_gaussian_dims = [2, 4, 8]
 gaussian_powers = [1, 2, 3]
-gaussian_max_shifts = [0, 0.5]
-n_layers = 6
-n_epochs = 256
+gaussian_max_shifts = [0, 1]
+n_layers = 4
+n_epochs = 1024
 batch_size = 128
 lr = 1e-3
 decay = 0.997
@@ -70,7 +70,7 @@ for dim_i, gaussian_dim in enumerate(n_gaussian_dims):
                     print(f"{round(100 * i / total_number_of_runs, 2)}% of all models trained   ")
                     i += 1
                     y = get_gaussian_samples(n_samples, gaussian_dim, shift, pow)
-                    flow = marginalizingFlow(gaussian_dim, epsilon, n_layers=6)
+                    flow = marginalizingFlow(gaussian_dim, epsilon, n_layers=n_layers)
                     trainer = Trainer()
 
                     losses = trainer.train(net=flow, dataset=y, n_epochs=n_epochs, batch_size=batch_size, lr=lr,

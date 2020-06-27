@@ -24,7 +24,6 @@ class Trainer:
 
                 optim.zero_grad()
                 loss = -log_prob
-
                 loss.mean().backward()
 
                 optim.step()
@@ -34,9 +33,9 @@ class Trainer:
 
                 if i % loss_interval == 0:
                     losses.append(loss.mean().detach().numpy())
-            if (e % 10) == 0:
-                show_forward(dataset, net,"")
-                show_backward(net,"")
+            # if (e % 25) == 0:
+            #     show_forward(dataset, net,"")
+            #     show_backward(net,"")
             scheduler.step()
 
             if torch.any(torch.isnan(loss.mean())):
