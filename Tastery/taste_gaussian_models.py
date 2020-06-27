@@ -62,8 +62,8 @@ for tup in model_tups:
 #                     # Remove outliers
 #                     perfs[dim_i,eps_i,shift_i,pow_i, rep] = reject_outliers(nll_bitsperdim.detach().numpy(),3).mean()
 #
-# pickle.dump(perfs, open("/home/guus/PycharmProjects/Thesis/Perfs/Gaussian_perfs","wb"))
-perfs = pickle.load(open("/home/guus/PycharmProjects/Thesis/Perfs/Gaussian_perfs","rb"))
+# pickle.dump(perfs, open("/home/guus/PycharmProjects/Thesis/Perfs/Gaussian_perfs.p","wb"))
+perfs = pickle.load(open("/home/guus/PycharmProjects/Thesis/Perfs/Gaussian_perfs.p","rb"))
 perfs_repav = perfs.mean(axis = -1)
 
 dims,eps,shifts,pows,reps = perfs.shape

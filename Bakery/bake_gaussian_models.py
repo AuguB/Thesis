@@ -6,6 +6,8 @@ from time import *
 import matplotlib.pyplot as plt
 import math
 
+
+
 # n_samples = 2048
 # n_epsilons = [0]
 # n_gaussian_dims = [4]
@@ -26,7 +28,7 @@ gaussian_max_shifts = [0, 1]
 n_layers = 4
 n_epochs = 1024
 batch_size = 128
-lr = 1e-3
+lr = 1e-4
 decay = 0.997
 n_repeats = 3
 
