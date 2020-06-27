@@ -17,6 +17,7 @@ class Trainer:
         optim = Adam(net.parameters(), lr=lr)
         scheduler = ExponentialLR(optim, decay)
         device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+        print(device)
         net.to(device)
         loss = 0
         for e in range(n_epochs):
