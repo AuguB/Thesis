@@ -34,14 +34,14 @@ for tup in model_tups:
     model_dict[tup].load_state_dict(model_state_dict_dict[tup])
     model_dict[tup].eval()
 #
-# # Plot the losses
-# for tup in loss_tups:
-#     model_signature = f"gauss_{tup[0]}dim_{tup[1]}eps_{tup[2]}shift_{tup[3]}pow"
-#     losses = loss_dict[tup]
-#     losses_lookback = 20
-#     plt.plot(moving_average(loss_dict[tup].mean(axis = 0), losses_lookback))
-#     plt.title(model_signature)
-#     plt.show()
+# Plot the losses
+for tup in loss_tups:
+    model_signature = f"gauss_{tup[0]}dim_{tup[1]}eps_{tup[2]}shift_{tup[3]}pow"
+    losses = loss_dict[tup]
+    losses_lookback = 20
+    plt.plot(moving_average(loss_dict[tup].mean(axis = 0), losses_lookback))
+    plt.title(model_signature)
+    plt.show()
 #
 # Store the performances
 # n_samples = 300

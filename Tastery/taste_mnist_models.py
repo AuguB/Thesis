@@ -9,7 +9,7 @@ from plotters import mnist_backward
 from utils import moving_average
 from torch.utils.data import DataLoader
 
-folder = "/home/guus/PycharmProjects/Thesis/Runs/MNIST6_2020-06-24 15:27:45.146828"
+folder = "/home/guus/PycharmProjects/Thesis/Runs/MNIST4_2020-06-26 15:23:09.058579"
 losses = pickle.load(open(folder+"/loss_list.p","rb"))
 model_state_dict_dict = pickle.load(open(folder+"/model_dict.p","rb"))
 n_epsilons = pickle.load(open(folder+"/n_epsilons.p","rb"))
@@ -19,7 +19,7 @@ logtwo = np.log(2)
 
 # load the models
 for eps in n_epsilons:
-    model_dict[eps] = marginalizingFlow(784, eps,n_layers = 6, mnist=True)
+    model_dict[eps] = marginalizingFlow(784, eps,n_layers = 4, mnist=True)
     model_dict[eps].load_state_dict(model_state_dict_dict[eps])
     model_dict[eps].eval()
 
@@ -27,14 +27,10 @@ for eps in n_epsilons:
 loss_dict = {}
 for i,v in enumerate(n_epsilons):
     loss_dict[v] = losses[i]
-    print(len(losses[i]))
     losses_lookback = 20
     plt.plot(moving_average(loss_dict[v], losses_lookback))
     plt.show()
-
-    mnist_backward(model_dict[v], "")
-
-
+    # mnist_backward(model_dict[v], "")
 
 
 # Store the performances
@@ -51,7 +47,20 @@ for i,v in enumerate(n_epsilons):
         # print(ll)
         nll_bitsperdim = -((ll/n_pixels)-np.log(128))/np.log(2)
         perfs[i, j*100:(j+1)*100] = nll_bitsperdim
-        print(nll_bitsperdim)
+
+pickle.dump(perfs, open("/home/guus/PycharmProjects/Thesis/Perfs/MNIST_perfs.p", "wb"))
+perfs = pickle.load(open("/home/guus/PycharmProjects/Thesis/Perfs/MNIST_perfs.p","rb"))
+perfs_samav = perfs.mean(axis = -1)
+ # Performance plots
+# Plot 1: one plot per repeat, and one average plt
+fig,ax = plt.subplots(1,1, figsize = (5,5))
+ax.plot(n_epsilons, perfs_samav)
+
+ax.set_title(f"Performance on the MNIST dataset")
+ax.set_ylabel("-Ll (b/d)")
+ax.set_xlabel("B")
+plt.savefig('/home/guus/PycharmProjects/Thesis/Plots/MNIST_plot1.png')
+plt.show()
 
 
 #

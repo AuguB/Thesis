@@ -31,9 +31,9 @@ class Trainer:
 
                 if i % loss_interval == 0:
                     losses.append(lossmean.detach().numpy())
-            # if (e % 25) == 0:
-            #     show_forward(dataset, net,"")
-            #     show_backward(net,"")
+            if (e % 100) == 0:
+                show_forward(dataset, net,"")
+                # show_backward(net,"")
             scheduler.step()
 
             if torch.any(torch.isnan(loss.mean())):

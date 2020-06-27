@@ -50,20 +50,20 @@ perfs_av = perfs_repav.mean(axis = -1)
 perfs_samav = perfs.mean(axis = -2)
 #
 #
-# # Performance plots
-# # Plot 1: one plot per repeat, and one average plt
-# fig,ax = plt.subplots(1,1, figsize = (5,5))
-# ax.plot(n_epsilons, perfs_av)
-# for r in range(n_repeats):
-#     ax.plot(n_epsilons,perfs_samav[:,r], alpha = .2, c = 'red')
-# ax.set_title(f"Performance on the Half-moons dataset")
-# ax.set_ylabel("-Ll (b/d)")
-# ax.set_xlabel("B")
-# plt.savefig('/home/guus/PycharmProjects/Thesis/Plots/Halfmoons_plot1.png')
-# plt.show()
+# Performance plots
+# Plot 1: one plot per repeat, and one average plt
+fig,ax = plt.subplots(1,1, figsize = (5,5))
+ax.plot(n_epsilons, perfs_av)
+for r in range(n_repeats):
+    ax.plot(n_epsilons,perfs_samav[:,r], alpha = .2, c = 'red')
+ax.set_title(f"Performance on the Half-moons dataset")
+ax.set_ylabel("-Ll (b/d)")
+ax.set_xlabel("B")
+plt.savefig('/home/guus/PycharmProjects/Thesis/Plots/Halfmoons_plot1.png')
+plt.show()
 
 
-fig,ax = plt.subplots( len(n_epsilons), n_repeats, sharex=True, sharey=True, figsize = (5, 10))
+fig,ax = plt.subplots( len(n_epsilons), n_repeats, sharex=True, sharey=True, figsize = (10, 20))
 for i, e  in enumerate(n_epsilons):
     for r in range(n_repeats):
         model = model_dict[(e,r)]

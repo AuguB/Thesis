@@ -26,10 +26,10 @@ n_gaussian_dims = [2, 4, 8]
 gaussian_powers = [1, 2, 3]
 gaussian_max_shifts = [0, 1]
 n_layers = 4
-n_epochs = 1024
-batch_size = 128
-lr = 1e-4
-decay = 0.997
+n_epochs = 2048
+batch_size = 1024
+lr = 1e-3
+decay = 0.999
 n_repeats = 3
 
 start = time()
