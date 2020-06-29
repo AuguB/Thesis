@@ -56,9 +56,9 @@ fig,ax = plt.subplots(1,1, figsize = (5,5))
 ax.plot(n_epsilons, perfs_av)
 for r in range(n_repeats):
     ax.plot(n_epsilons,perfs_samav[:,r], alpha = .2, c = 'red')
-ax.set_title(f"Performance on the Half-moons dataset")
 ax.set_ylabel("-Ll (b/d)")
 ax.set_xlabel("B")
+plt.tight_layout()
 plt.savefig('/home/guus/PycharmProjects/Thesis/Plots/Halfmoons_plot1.png')
 plt.show()
 
@@ -72,6 +72,7 @@ for i, e  in enumerate(n_epsilons):
         inv = model.inverse(data).detach().numpy()[:,:2]
         print(inv.shape)
         ax[i, r].scatter(inv[:,0], inv[:,1], s = 1)
+plt.tight_layout()
 plt.savefig('/home/guus/PycharmProjects/Thesis/Plots/Halfmoons_plot2.png')
 plt.show()
 

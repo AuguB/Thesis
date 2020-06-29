@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 n_epsilons = [0, 1, 2, 4, 8, 16, 32, 64]
 n_layers = 4
-n_epochs = 3
+n_epochs = 5
 batch_size = 16
 lr = 5e-4
 decay = 0.99

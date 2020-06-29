@@ -20,7 +20,7 @@ class marginalizingFlow(nn.Module):
                 covariance_matrix=torch.diag(torch.ones(self.M)))  # The distribution to sample epsilon
 
     def forward(self, A, marginalize=False, n_samples=200):
-        if not marginalize:
+        if (not marginalize) or (self.M == 0):
             A_epsilon, _ = self.add_epsilon(A)
             return self.normalizingFlow(A_epsilon)
         else:
