@@ -56,9 +56,11 @@ class coupling(nn.Module):
 
 
 class actnorm(nn.Module):
+
+    # TODO Make the initiated a parameter
     def __init__(self, dim):
         super(actnorm, self).__init__()
-        self.initiated = False
+        self.initiated = True
         self.shift = nn.Parameter(torch.full((dim,), 0.), requires_grad=True)
         self.scale = nn.Parameter(torch.full((dim,), 0.), requires_grad=True)
         self.epsilon = 0.001

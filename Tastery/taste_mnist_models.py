@@ -11,7 +11,7 @@ from plotters import mnist_backward
 from utils import moving_average, reject_outliers
 from torch.utils.data import DataLoader
 
-folder = "/home/guus/PycharmProjects/Thesis/Runs/MNIST4_2020-06-26 15:23:09.058579"
+folder = "/home/guus/PycharmProjects/Thesis/Runs/MNIST4_2020-06-28 12:22:18.013406"
 losses = pickle.load(open(folder+"/loss_list.p","rb"))
 model_state_dict_dict = pickle.load(open(folder+"/model_dict.p","rb"))
 n_epsilons = pickle.load(open(folder+"/n_epsilons.p","rb"))
@@ -39,20 +39,21 @@ for i,v in enumerate(n_epsilons):
 data = build_px_samples(1,0,"MNIST")
 n_mnist_samples = 60000
 batchsize = 5000
-# samples = data.data
-# perfs = np.zeros((len(n_epsilons),n_mnist_samples))
-# for i,v in enumerate(n_epsilons):
-#     loader = DataLoader(dataset=data, batch_size=batchsize, shuffle=True)
-#     for j, (d,_) in enumerate(loader):
-#         print(i, j)
-#         d = torch.reshape(d, (-1,n_pixels))
-#         d_noised = d + torch.rand(d.shape) * 0.2
-#         ll,_ = model_dict[v](d_noised, marginalize = True, n_samples = 20)
-#         # print(ll)
-#         nll_bitsperdim = -((ll/n_pixels)-np.log(128))/np.log(2)
-#         perfs[i, j*batchsize:(j+1)*batchsize] = nll_bitsperdim.detach().numpy()
-#
-perfs = pickle.load(open("/home/guus/PycharmProjects/Thesis/Perfs/MNIST_perfs.p","rb"))
+samples = data.data
+perfs = np.zeros((len(n_epsilons),n_mnist_samples))
+for i,v in enumerate(n_epsilons):
+    loader = DataLoader(dataset=data, batch_size=batchsize, shuffle=True)
+    for j, (d,_) in enumerate(loader):
+        print(i, j)
+        d = torch.reshape(d, (-1,n_pixels))
+        d_noised = d + torch.rand(d.shape) * 0.2
+        ll,_ = model_dict[v](d_noised, marginalize = True, n_samples = 20)
+        # print(ll)
+        nll_bitsperdim = -((ll/n_pixels)-np.log(128))/np.log(2)
+        perfs[i, j*batchsize:(j+1)*batchsize] = nll_bitsperdim.detach().numpy()
+
+pickle.dump(perfs, open("/home/guus/PycharmProjects/Thesis/Perfs/MNIST_perfs.p", "wb"))
+perfs = pickle.load(open("/home/guus/PycharmProjects/Thesis/Perfs/MNIST_perfs.p", "rb"))
 print(perfs.max(), perfs.min(), perfs.mean(), perfs.std())
 for i in range(len(n_epsilons)):
     perfs[i] = reject_outliers(perfs[i],3)
