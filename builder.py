@@ -38,6 +38,15 @@ def build_mnist_flow(dim, n_layers=3):
 
     return normalizingFlow(module_list, dim)
 
+
+def get_CIFAR10():
+    transform = transforms.Compose(
+        [transforms.ToTensor(),
+         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    trainset = tds.CIFAR10(root='../data', train=True,
+                                            download=True, transform=transform)
+    return trainset
+
 def build_px_samples(n_samples, n_epsilons=0, distribution="square_gaussian"):
     if distribution == "square_gaussian":
         base = torch.randn((n_samples, 1)) ** 2
@@ -49,6 +58,9 @@ def build_px_samples(n_samples, n_epsilons=0, distribution="square_gaussian"):
         base = torch.from_numpy(base).type("torch.FloatTensor")
     elif distribution == "MNIST":
         base = get_MNIST()
+        n_samples = base.data.shape[0]
+    elif distribution == "CIFAR10":
+        base = get_CIFAR10()
         n_samples = base.data.shape[0]
     else:
         print("Distribution unknown")
@@ -109,8 +121,8 @@ def get_gaussian_samples(n_samples,gaussian_dim,shift, pow):
     return x
 
 
-def get_MNIST():
-    dataset = tds.MNIST('../data', train=True, download=True,
+def get_MNIST(train = True):
+    dataset = tds.MNIST('../data', train=train, download=True,
                              transform=transforms.Compose([
                                  transforms.ToTensor(),
                                  transforms.Normalize((0.1307,), (0.3081,))

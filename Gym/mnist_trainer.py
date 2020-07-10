@@ -3,7 +3,7 @@ import torch
 from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import DataLoader
 from torch.optim import *
-from plotters import show_forward, show_backward, mnist_backward, mnist_noised
+from plotters import show_forward, show_backward, plot_backward, mnist_noised
 
 
 class MNISTTrainer:
@@ -11,7 +11,7 @@ class MNISTTrainer:
         pass
 
     def train(self, net, dataset, n_epochs=300, batch_size=1, lr=1e-3, decay=1, model_signature="unknown model",
-              loss_interval=10):
+              loss_interval=10,dataname = "MNIST"):
         losses = []
         loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
         optim = Adam(net.parameters(), lr=lr)
@@ -42,7 +42,7 @@ class MNISTTrainer:
                     losses.append(loss.mean().detach().numpy())
 
                 if (i % 100) == 0:
-                    mnist_backward(net,"")
+                    plot_backward(net, dataname)
                     scheduler.step()
 
             if torch.any(torch.isnan(loss.mean())):

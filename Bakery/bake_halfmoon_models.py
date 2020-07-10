@@ -6,13 +6,13 @@ from time import *
 import math
 
 n_samples = 2048
-n_epsilons = [0, 1, 2, 4, 8, 16]
-n_layers = 6
-n_epochs = 256+512
-batch_size = 128
-lr = 1e-3
+n_epsilons = [0, 1, 2, 3, 4]
+n_layers = 4
+n_epochs = 1024
+batch_size = 64
+lr = 1e-2
 decay = 0.997
-n_repeats = 3
+n_repeats = 5
 
 start = time()
 # Create a folder to store the test results

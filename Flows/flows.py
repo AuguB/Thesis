@@ -27,7 +27,8 @@ class coupling(nn.Module):
         self.first = int(dim / 2)
         self.second = self.dim - self.first
         layers = []
-        sizes = [self.first] + ([self.first * 3] * 3) + [self.second * 2]
+        bigsize = min([3000,self.first*3])
+        sizes = [self.first] + ([bigsize] * 3) + [self.second * 2]
         for i in range(4):
             layers.append(nn.Linear(sizes[i], sizes[i + 1], True))
             layers.append(nn.ReLU())
@@ -60,7 +61,7 @@ class actnorm(nn.Module):
     # TODO Make the initiated a parameter
     def __init__(self, dim):
         super(actnorm, self).__init__()
-        self.initiated = True
+        self.initiated = False
         self.shift = nn.Parameter(torch.full((dim,), 0.), requires_grad=True)
         self.scale = nn.Parameter(torch.full((dim,), 0.), requires_grad=True)
         self.epsilon = 0.001

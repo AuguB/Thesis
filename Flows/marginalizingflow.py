@@ -20,7 +20,7 @@ class marginalizingFlow(nn.Module):
                 covariance_matrix=torch.diag(torch.ones(self.M)))  # The distribution to sample epsilon
 
     def forward(self, A, marginalize=False, n_samples=200):
-        if not marginalize:
+        if (not marginalize) or (self.M == 0):
             A_epsilon, _ = self.add_epsilon(A)
             return self.normalizingFlow(A_epsilon)
         else:
@@ -29,8 +29,6 @@ class marginalizingFlow(nn.Module):
             for s in range(n_samples):
                 A_epsilon, epsilon_log_prob = self.add_epsilon(A)
                 log_prob, transformed = self.normalizingFlow(A_epsilon)
-                if log_prob.min().abs() > 1e5:
-                    pass
                 log_probs[:, s] = log_prob.clone().detach() - epsilon_log_prob
             mean_log_probs = self.logmean(log_probs).clone().detach()
             return mean_log_probs, transformed  # Returns only the last transformation
@@ -48,7 +46,6 @@ class marginalizingFlow(nn.Module):
     def logmean(self, log_probs):
 
         max_logprob, ind = torch.max(log_probs, dim=1)
-        print(log_probs.min(), log_probs.max(),log_probs.mean(), log_probs.std())
         normed = log_probs - max_logprob.repeat((log_probs.shape[1], 1)).T
         linear = torch.exp(normed)
         mean = torch.mean(linear, dim=1)

@@ -9,7 +9,7 @@ from torch.distributions import MultivariateNormal
 
 from utils import moving_average, reject_outliers
 
-folder = "/home/guus/PycharmProjects/Thesis/Runs/gaussian4_2020-06-27 16:24:16.172616"
+folder = "/home/guus/PycharmProjects/Thesis/Runs/gaussian4_2020-07-03 14:32:18.165834"
 loss_dict = pickle.load(open(folder + "/loss_dict.p", "rb"))
 model_state_dict_dict = pickle.load(open(folder + "/model_dict.p", "rb"))
 param_dict = pickle.load(open(folder + "/param_dict.p", "rb"))
@@ -45,37 +45,31 @@ with torch.no_grad():
     #     plt.show()
     #
     # Store the performances
-    n_samples = 10
-    perfs = np.zeros(
-        (len(n_gaussian_dims), len(n_epsilons), len(gaussian_max_shifts), len(gaussian_powers), len(reps), n_samples))
-    total_perfs = len(n_gaussian_dims) * len(n_epsilons) * len(gaussian_max_shifts) * len(gaussian_powers) * len(reps)
-    r = 0
-    for dim_i, gaussian_dim in enumerate(n_gaussian_dims):
-        for shift_i, shift in enumerate(gaussian_max_shifts):
-            for pow_i, pow in enumerate(gaussian_powers):
-                y = get_gaussian_samples(n_samples, gaussian_dim, shift, pow)
-                for eps_i, epsilon in enumerate(n_epsilons):
-                    for rep in reps:
-                        r += 1
-                        print(f"\r{r / total_perfs}", end="")
-                        ll, transformed = model_dict[(gaussian_dim, epsilon, shift, pow, rep)](y, marginalize=True, n_samples = n_samples)
-                        # nll_bitsperdim = -((ll / 2)) / np.log(2)
-                        # Remove outliers
-                        perfs[dim_i, eps_i, shift_i, pow_i, rep] = ll.detach().numpy()
-    print()
-    pickle.dump(perfs, open(f"/home/guus/PycharmProjects/Thesis/Perfs/Gaussian_perfs{n_samples}.p", "wb"))
+    n_samples = 200
+    # perfs = np.zeros(
+    #     (len(n_gaussian_dims), len(n_epsilons), len(gaussian_max_shifts), len(gaussian_powers), len(reps), n_samples))
+    # total_perfs = len(n_gaussian_dims) * len(n_epsilons) * len(gaussian_max_shifts) * len(gaussian_powers) * len(reps)
+    # r = 0
+    #
+    # for dim_i, gaussian_dim in enumerate(n_gaussian_dims):
+    #     for shift_i, shift in enumerate(gaussian_max_shifts):
+    #         for pow_i, pow in enumerate(gaussian_powers):
+    #             y = get_gaussian_samples(n_samples, gaussian_dim, shift, pow)
+    #             for eps_i, epsilon in enumerate(n_epsilons):
+    #
+    #                 for rep in reps:
+    #                     r += 1
+    #                     print(f"\r{r / total_perfs}", end="")
+    #                     ll, transformed = model_dict[(gaussian_dim, epsilon, shift, pow, rep)](y, marginalize=True, n_samples = n_samples)
+    #                     # nll_bitsperdim = -((ll / 2)) / np.log(2)
+    #                     # Remove outliers
+    #                     perfs[dim_i, eps_i, shift_i, pow_i, rep] = ll.detach().numpy()
+    # print()
+    # pickle.dump(perfs, open(f"/home/guus/PycharmProjects/Thesis/Perfs/Gaussian_perfs{n_samples}.p", "wb"))
     perfs = pickle.load(open(f"/home/guus/PycharmProjects/Thesis/Perfs/Gaussian_perfs{n_samples}.p", "rb"))
-    s = 1
-    d = 2
-    tar = perfs[d, :, s, 1, 0].copy()
-    print(tar.min(), tar.max(), tar.mean(), tar.std())
-    tar = perfs[d, :, s, 1, 1].copy()
-    print(tar.min(), tar.max(), tar.mean(), tar.std())
-    tar = perfs[d, :, s, 1, 2].copy()
-    print(tar.min(), tar.max(), tar.mean(), tar.std())
 
-    perfs_samav = perfs.mean(axis=-1)
-    perfs_repav = perfs_samav.mean(axis=-1)
+    perfs_samav = np.log(np.exp(perfs).mean(axis=-1))
+    perfs_repav = np.log(np.exp(perfs_samav).mean(axis=-1))
 
     dims, eps, shifts, pows, reps, _ = perfs.shape
 
@@ -83,42 +77,69 @@ with torch.no_grad():
     # Performance plots
     # Group = dim
     # fix: shift, pow
-    fig,ax = plt.subplots(1, pows, figsize = (15,5))
-    ax = ax.flatten()
+    lineStyles = ["-","--","-."]
+    colors = ["black", "black","black"]
+    print("D & a & B=0 & B=1 & B=2 & B=3 & B=4 \\\\\\hline")
     for j, p in enumerate(gaussian_powers):
-        ax[j].set_title(f"a={p}")
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+        ax.set_title(f"ψ={p}")
         for i,d in enumerate(n_gaussian_dims):
-            ax[j].plot(n_epsilons, -perfs_repav[i, :, 0, j], label = f"{d}-D")
-    ax[0].set_ylabel("Negative Log-likelihood")
-    ax[0].set_xlabel("B")
-    plt.legend()
-    plt.savefig("/home/guus/PycharmProjects/Thesis/Plots/Gaussian_plot1.png")
-    plt.show()
+            currentRangeSamav = -perfs_samav[i, :, 0, j]
+            currentRangeRepav = -perfs_repav[i, :, 0, j]
+            minRange = np.min(currentRangeSamav, axis=-1)
 
+            print(f"{d} & {p} & "+" & ".join([str(round(s,2)) for s in minRange]), end = "\\\\")
+            if i == 2:
+                print("\\hline")
+            else:
+                print()
 
-    # Plot 2:
-    # group = shift
-    # fix: dim, pow
-    fig,ax = plt.subplots(1, shifts, figsize = (15,5))
-    ax = ax.flatten()
-    for j, p in enumerate(gaussian_max_shifts):
-        ax[j].set_title(f"shift={p}")
-        for i,d in enumerate(n_gaussian_dims):
-            if p == 1 and d == 8:
-                tar = perfs_repav[i,:,j,1]
-                print(tar.min(),tar.max(),tar.mean(), tar.std())
-            ax[j].plot(n_epsilons, perfs_repav[i, :,j , 1], label = f"{d}-D")
-    ax[0].set_ylabel("Negative Log-likelihood")
-    ax[0].set_xlabel("B")
-    plt.legend()
-    plt.savefig("/home/guus/PycharmProjects/Thesis/Plots/Gaussian_plot2.png")
-    plt.show()
+            # ax.plot(n_epsilons, -perfs_repav[i, :, 0, j], label = f"{d}-D", c=colors[i], alpha = 1)
+            ci = 1.96 * np.abs(np.std(currentRangeSamav, axis=1)/np.sqrt(5))
+
+            ax.plot(n_epsilons, minRange, label = f"{d}-D", c=colors[i], alpha = 1, lineStyle = lineStyles[i])
+
+            # ax.fill_between(n_epsilons, currentRangeRepav+ci,currentRangeRepav-ci, color =colors[i], alpha = 0.1)
+            # for r in range(n_repeats):
+            #     ax.plot(n_epsilons, -perfs_samav[i, :, 0, j,r],c=colors[i],alpha=0.2)
+
+        ax.set_xlabel("B")
+        ax.set_ylabel("Negative Log-likelihood")
+        if j == 2:
+            plt.legend()
+        plt.tight_layout()
+        plt.savefig(f"/home/guus/PycharmProjects/Thesis/Plots/Gaussian_plot1_{p}.png")
+        plt.show()
+
+    lineStyles = ["-", "--", "-."]
+    colors = ["red", "blue", "green"]
+    for j, p in enumerate(gaussian_powers):
+        fig, ax = plt.subplots(1, 1, figsize=(15, 8))
+        ax.set_title(f"ψ={p}")
+        for i, d in enumerate(n_gaussian_dims):
+            currentRangeSamav = -perfs_samav[i, :, 0, j]
+            currentRangeRepav = -perfs_repav[i, :, 0, j]
+            minRange = np.min(currentRangeSamav, axis=-1)
+            # ax.plot(n_epsilons, -perfs_repav[i, :, 0, j], label = f"{d}-D", c=colors[i], alpha = 1)
+            ci = 1.96 * np.abs(np.std(currentRangeSamav, axis=1) / np.sqrt(5))
+            ax.plot(n_epsilons, currentRangeRepav, label=f"{d}-D", c=colors[i], alpha=1, lineStyle=lineStyles[i])
+            ax.fill_between(n_epsilons, currentRangeRepav+ci,currentRangeRepav-ci, color =colors[i], alpha = 0.1)
+            # for r in range(n_repeats):
+            #     ax.plot(n_epsilons, -perfs_samav[i, :, 0, j,r],c=colors[i],alpha=0.2,lineStyle=lineStyles[i])
+
+        ax.set_xlabel("B")
+        ax.set_ylabel("Negative Log-likelihood")
+        if j == 2:
+            plt.legend()
+        plt.tight_layout()
+        plt.savefig(f"/home/guus/PycharmProjects/Thesis/Plots/Gaussian_plot4_{p}.png")
+        plt.show()
 
     # dims,eps,shifts,pows,reps,_ = perfs.shape
     # Plot 3:
     # inverse plots
     n_generations = 1000
-    fig, ax = plt.subplots(len(n_epsilons), len(gaussian_powers), figsize=(10, 20))
+    fig, ax = plt.subplots(len(n_epsilons)+1, len(gaussian_powers), figsize=(10, 20))
     for j, e in enumerate(n_epsilons):
         for i, p in enumerate(gaussian_powers):
             ax[j, i].set_title(f"a={p}, B={e}")
@@ -133,8 +154,20 @@ with torch.no_grad():
                 (n_generations,))
             inverse = model_dict[(2, e, 0, p, 0)].inverse(data).detach().numpy()
             ax[j, i].scatter(inverse[:, 0], inverse[:, 1], s=1)
+    for i,p in enumerate(gaussian_powers):
+        j = len(n_epsilons)
+        if p % 2 == 1:
+            ax[j, i].set_xlim((-3 ** p, 3 ** p))
+            ax[j, i].set_ylim((-3 ** p, 3 ** p))
+        else:
+            ax[j, i].set_xlim((-0.5, 3 ** p))
+            ax[j, i].set_ylim((-0.5, 3 ** p))
+        data = get_gaussian_samples(n_generations, 2, 0, p)
+        ax[j,i].set_title(f"target for ψ={p}")
+        ax[j,i].scatter(data[:,0],data[:,1],c="red",s=1)
     # ax[0].set_ylabel("-Ll (b/d)")
     # ax[0].set_xlabel("B")
     plt.legend()
+    plt.tight_layout()
     plt.savefig("/home/guus/PycharmProjects/Thesis/Plots/Gaussian_plot3.png")
     plt.show()

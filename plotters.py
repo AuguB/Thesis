@@ -84,16 +84,28 @@ def show_backward(net, filename):
         plt.show()
         plt.close()
 
-def mnist_backward(net, filename):
-    data = MultivariateNormal(loc = torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((4,))
-    with torch.no_grad():
-        fig, ax = plt.subplots(2,2,figsize=(5, 5))
-        ax = ax.flatten()
-        backward = net.inverse(data).detach().numpy()[:,:784]
-        for i in range(4):
-            ax[i].imshow(np.reshape(backward[i],(28,28)), cmap='Greys')
-        plt.show()
-        plt.close(fig)
+def plot_backward(net, dataname):
+    if dataname == "MNIST":
+        data = MultivariateNormal(loc = torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((4,))
+        with torch.no_grad():
+            fig, ax = plt.subplots(2,2,figsize=(5, 5))
+            ax = ax.flatten()
+            backward = net.inverse(data).detach().numpy()[:,:784]
+            for i in range(4):
+                ax[i].imshow(np.reshape(backward[i],(28,28)), cmap='Greys')
+            plt.show()
+            plt.close(fig)
+
+    else:
+        data = MultivariateNormal(loc=torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((4,))
+        with torch.no_grad():
+            fig, ax = plt.subplots(2, 2, figsize=(5, 5))
+            ax = ax.flatten()
+            backward = net.inverse(data).detach().numpy()[:, :4608]
+            for i in range(4):
+                ax[i].imshow(np.reshape(backward[i], (32,32,3))*2+0.5)
+            plt.show()
+            plt.close(fig)
 
 def mnist_noised(noisy, natural):
     fig,ax = plt.subplots(1,2,figsize=(10,5))
@@ -105,7 +117,7 @@ def mnist_noised(noisy, natural):
 def plot_mappings(flow, data, current_image_folder, modelname, dist):
     if dist == "MNIST":
         plotname = "/".join([current_image_folder, "plot_" + modelname])
-        mnist_backward(flow, plotname)
+        plot_backward(flow, plotname)
     else:
         forwardname = "/".join([current_image_folder, "forward_" + modelname])
         show_forward(data,flow,forwardname)

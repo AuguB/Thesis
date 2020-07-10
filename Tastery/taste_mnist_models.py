@@ -2,12 +2,12 @@ import pickle
 import torch
 from torch.distributions import MultivariateNormal
 
-from builder import build_px_samples
+from builder import build_px_samples, get_MNIST
 from Flows.marginalizingflow import marginalizingFlow
 import numpy as np
 import matplotlib.pyplot as plt
 
-from plotters import mnist_backward
+from plotters import plot_backward
 from utils import moving_average, reject_outliers
 from torch.utils.data import DataLoader
 
@@ -36,37 +36,35 @@ for i,v in enumerate(n_epsilons):
 
 
 # Store the performances
-data = build_px_samples(1,0,"MNIST")
-n_mnist_samples = 60000
+data = get_MNIST(False)
+print(data.data.shape)
+n_mnist_samples = 10000
 batchsize = 5000
 samples = data.data
-perfs = np.zeros((len(n_epsilons),n_mnist_samples))
-for i,v in enumerate(n_epsilons):
-    loader = DataLoader(dataset=data, batch_size=batchsize, shuffle=True)
-    for j, (d,_) in enumerate(loader):
-        print(i, j)
-        d = torch.reshape(d, (-1,n_pixels))
-        d_noised = d + torch.rand(d.shape) * 0.2
-        ll,_ = model_dict[v](d_noised, marginalize = True, n_samples = 20)
-        # print(ll)
-        nll_bitsperdim = -((ll/n_pixels)-np.log(128))/np.log(2)
-        perfs[i, j*batchsize:(j+1)*batchsize] = nll_bitsperdim.detach().numpy()
+# perfs = np.zeros((len(n_epsilons),n_mnist_samples))
+# for i,v in enumerate(n_epsilons):
+#     loader = DataLoader(dataset=data, batch_size=batchsize, shuffle=True)
+#     for j, (d,_) in enumerate(loader):
+#         d = torch.reshape(d, (-1,n_pixels))
+#         d_noised = d + torch.rand(d.shape) * 0.2
+#         ll,_ = model_dict[v](d_noised, marginalize = True, n_samples = 20)
+#         print(ll.min(), ll.max(),ll.mean(),ll.std())
+#         # print(ll)
+#         perfs[i, j*batchsize:(j+1)*batchsize] = ll.detach().numpy()
+#
+# pickle.dump(perfs, open("/home/guus/PycharmProjects/Thesis/Perfs/MNIST_logli.p", "wb"))
+perfs = pickle.load(open("/home/guus/PycharmProjects/Thesis/Perfs/MNIST_logli.p", "rb")).astype(np.float128)
 
-pickle.dump(perfs, open("/home/guus/PycharmProjects/Thesis/Perfs/MNIST_perfs.p", "wb"))
-perfs = pickle.load(open("/home/guus/PycharmProjects/Thesis/Perfs/MNIST_perfs.p", "rb"))
-print(perfs.max(), perfs.min(), perfs.mean(), perfs.std())
-for i in range(len(n_epsilons)):
-    perfs[i] = reject_outliers(perfs[i],3)
-print(perfs.max(), perfs.min(), perfs.mean(), perfs.std())
-perfs_samav = perfs.mean(axis = -1)
+perfs_samav = np.log(np.exp(perfs).mean(axis = -1))
 
-
+#
  # Performance plots
 # Plot 1: line plot, x = B, y = -ll (b/d)
 fig,ax = plt.subplots(1,1, figsize = (5,5))
+print("&".join([str(round(i,1)) for i in perfs_samav]), end = "\\\\\hline\n")
 ax.plot(n_epsilons, perfs_samav)
 ax.set_title(f"Performance on the MNIST dataset")
-ax.set_ylabel("-Ll (b/d)")
+ax.set_ylabel("Log likelihood")
 ax.set_xlabel("B")
 plt.savefig('/home/guus/PycharmProjects/Thesis/Plots/MNIST_plot1.png')
 plt.show()
@@ -77,29 +75,16 @@ plt.show()
 # Plot 2: generations
 perfs_repav = perfs.mean(axis = -1)
 n_generations = 10
-fig,ax = plt.subplots(len(n_epsilons), n_generations, figsize = (20,14), sharex=True, sharey=True)
+fig,ax = plt.subplots(len(n_epsilons), n_generations, figsize = (20,14))
+plt.axis('off')
 for i,eps in enumerate(n_epsilons):
     model = model_dict[eps]
-    data = MultivariateNormal(loc=torch.zeros(model.Q), covariance_matrix=torch.diag(torch.ones(model.Q))).sample(
-        (n_generations,))
+    p= MultivariateNormal(loc=torch.zeros(model.Q), covariance_matrix=torch.diag(torch.ones(model.Q)))
+    data = p.sample((n_generations,))
     forward = model.inverse(data).detach().numpy()
     for s in range(n_generations):
         ax[i,s].imshow(forward[s,:784].reshape((28,28)), cmap = "Greys")
-plt.tight_layout()
-
+        ax[i,s].set_xticks([])
+        ax[i,s].set_yticks([])
+plt.savefig('/home/guus/PycharmProjects/Thesis/Plots/MNIST_plot2.png')
 plt.show()
-
-# fig, ax = plt.subplots(1, len(dists),figsize=(len(dists)*5,5))
-# perfs = np.mean(perfs, axis = 2)
-# for d, dist in enumerate(dists):
-#     if len(dists) == 1:
-#         ax.plot(epsilons, perfs[d])
-#     else:
-#         ax[d].plot(epsilons, perfs[d])
-# plt.show()
-
-# for d, dist in enumerate(dists):
-#     for e, eps in enumerate(epsilons):
-#         for r, rep in enumerate(reps):
-#             flow = model_dict[dist,eps,r]
-#             show_backward(flow,"")

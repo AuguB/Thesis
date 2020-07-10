@@ -6,8 +6,6 @@ from time import *
 import matplotlib.pyplot as plt
 import math
 
-
-
 # n_samples = 2048
 # n_epsilons = [0]
 # n_gaussian_dims = [4]
@@ -21,23 +19,23 @@ import math
 # n_repeats = 3
 
 n_samples = 2048
-n_epsilons = [0, 1, 2, 4, 8, 16]
-n_gaussian_dims = [2, 4, 8]
-gaussian_powers = [1, 2, 3]
-gaussian_max_shifts = [0, 1]
+n_epsilons = [0,1,2,3,4]
+n_gaussian_dims = [2,3,4]
+gaussian_max_shifts = [0]
+gaussian_powers = [1,2,3]
 n_layers = 4
-n_epochs = 2048
-batch_size = 1024
-lr = 1e-3
-decay = 0.999
-n_repeats = 3
+n_epochs = 256
+batch_size = 128
+lr = 1e-2
+decay = 0.995
+n_repeats = 5
 
 start = time()
 # Create a folder to store the test results
 current_test_folder = make_top_folder(f"gaussian{n_layers}")
 
 # An object to hold all the losses, maps from tuple (distribution, epsilons) to ndarray(n_repeats, loss_observations)
-loss_interval = 32
+loss_interval = 2
 loss_observations = math.ceil(n_samples / (batch_size * loss_interval)) * n_epochs
 loss_dict = {}
 
@@ -72,13 +70,15 @@ for dim_i, gaussian_dim in enumerate(n_gaussian_dims):
                     print(f"{round(100 * i / total_number_of_runs, 2)}% of all models trained   ")
                     i += 1
                     y = get_gaussian_samples(n_samples, gaussian_dim, shift, pow)
-                    flow = marginalizingFlow(gaussian_dim, epsilon, n_layers=n_layers)
+                    flow = marginalizingFlow(N=gaussian_dim, M=epsilon, n_layers=n_layers)
                     trainer = Trainer()
 
                     losses = trainer.train(net=flow, dataset=y, n_epochs=n_epochs, batch_size=batch_size, lr=lr,
                                            decay=decay, model_signature=model_signature, loss_interval=loss_interval)
 
                     rep_losses[rep, :len(losses)] = losses
+                    plt.plot(losses)
+                    plt.show()
 
                     model_dict[(gaussian_dim, epsilon, shift, pow, rep)] = flow.state_dict()
 
@@ -100,3 +100,4 @@ pickle.dump(loss_dict, open(losses_filename, "wb"))
 stop = time()
 duration = stop - start
 print(duration, " seconds")
+print(f"The results are stored in {current_test_folder}")
