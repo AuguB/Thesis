@@ -17,7 +17,7 @@ class MNISTTrainer:
         optim = Adam(net.parameters(), lr=lr)
         scheduler = ExponentialLR(optim, decay)
         loss = 0
-        total_iter = (60000/batch_size)*n_epochs
+        total_iter = (50000/batch_size)*n_epochs
         this_iter = 0
         for e in range(n_epochs):
             for i, (v,_) in enumerate(loader):

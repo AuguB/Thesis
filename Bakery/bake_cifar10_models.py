@@ -33,8 +33,7 @@ pickle.dump(n_epsilons,open(f"{current_test_folder}/n_epsilons.p","wb"))
 model_dict = {}
 rep_losses = []
 data = build_px_samples(100,0,"CIFAR10")
-plt.imshow(data.data[0])
-plt.show()
+print(data.data.shape)
 for eps_i, epsilon in enumerate(n_epsilons):
     flow = marginalizingFlow(n_pixels, epsilon, n_layers=n_layers, mnist=True)
     trainer = MNISTTrainer()
