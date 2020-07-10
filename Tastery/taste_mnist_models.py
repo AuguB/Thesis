@@ -60,12 +60,12 @@ perfs_samav = np.log(np.exp(perfs).mean(axis = -1))
 #
  # Performance plots
 # Plot 1: line plot, x = B, y = -ll (b/d)
-fig,ax = plt.subplots(1,1, figsize = (5,5))
+fig,ax = plt.subplots(1,1, figsize = (4,4))
 print("&".join([str(round(i,1)) for i in perfs_samav]), end = "\\\\\hline\n")
 ax.plot(n_epsilons, perfs_samav)
-ax.set_title(f"Performance on the MNIST dataset")
 ax.set_ylabel("Log likelihood")
 ax.set_xlabel("B")
+plt.tight_layout()
 plt.savefig('/home/guus/PycharmProjects/Thesis/Plots/MNIST_plot1.png')
 plt.show()
 

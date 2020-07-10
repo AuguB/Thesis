@@ -54,7 +54,7 @@ print(" & ".join([str(round(i,2)) for i in perfs_minrep]))
 #
 # Performance plots
 # Plot 1: one plot per repeat, and one average plt
-fig,ax = plt.subplots(1,1, figsize = (5,5))
+fig,ax = plt.subplots(1,1, figsize = (4,4))
 ci = 1.96 * np.abs(np.std(perfs_samav, axis=1) / np.sqrt(5))
 ax.plot(n_epsilons, perfs_repav, c="black", alpha=1, lineStyle="-")
 ax.fill_between(n_epsilons, perfs_repav + ci, perfs_repav - ci, color="black", alpha=0.1)

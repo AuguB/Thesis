@@ -101,7 +101,7 @@ def plot_backward(net, dataname):
         with torch.no_grad():
             fig, ax = plt.subplots(2, 2, figsize=(5, 5))
             ax = ax.flatten()
-            backward = net.inverse(data).detach().numpy()[:, :4608]
+            backward = net.inverse(data).detach().numpy()[:, :3*32*32]
             for i in range(4):
                 ax[i].imshow(np.reshape(backward[i], (32,32,3))*2+0.5)
             plt.show()

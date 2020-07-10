@@ -81,7 +81,8 @@ with torch.no_grad():
     colors = ["black", "black","black"]
     print("D & a & B=0 & B=1 & B=2 & B=3 & B=4 \\\\\\hline")
     for j, p in enumerate(gaussian_powers):
-        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+        fig, ax = plt.subplots(1, 1, figsize=(3.5, 3))
+
         ax.set_title(f"ψ={p}")
         for i,d in enumerate(n_gaussian_dims):
             currentRangeSamav = -perfs_samav[i, :, 0, j]
@@ -98,7 +99,6 @@ with torch.no_grad():
             ci = 1.96 * np.abs(np.std(currentRangeSamav, axis=1)/np.sqrt(5))
 
             ax.plot(n_epsilons, minRange, label = f"{d}-D", c=colors[i], alpha = 1, lineStyle = lineStyles[i])
-
             # ax.fill_between(n_epsilons, currentRangeRepav+ci,currentRangeRepav-ci, color =colors[i], alpha = 0.1)
             # for r in range(n_repeats):
             #     ax.plot(n_epsilons, -perfs_samav[i, :, 0, j,r],c=colors[i],alpha=0.2)
@@ -114,7 +114,7 @@ with torch.no_grad():
     lineStyles = ["-", "--", "-."]
     colors = ["red", "blue", "green"]
     for j, p in enumerate(gaussian_powers):
-        fig, ax = plt.subplots(1, 1, figsize=(15, 8))
+        fig, ax = plt.subplots(1, 1, figsize=(3.5, 3))
         ax.set_title(f"ψ={p}")
         for i, d in enumerate(n_gaussian_dims):
             currentRangeSamav = -perfs_samav[i, :, 0, j]
@@ -124,6 +124,7 @@ with torch.no_grad():
             ci = 1.96 * np.abs(np.std(currentRangeSamav, axis=1) / np.sqrt(5))
             ax.plot(n_epsilons, currentRangeRepav, label=f"{d}-D", c=colors[i], alpha=1, lineStyle=lineStyles[i])
             ax.fill_between(n_epsilons, currentRangeRepav+ci,currentRangeRepav-ci, color =colors[i], alpha = 0.1)
+
             # for r in range(n_repeats):
             #     ax.plot(n_epsilons, -perfs_samav[i, :, 0, j,r],c=colors[i],alpha=0.2,lineStyle=lineStyles[i])
 
@@ -138,10 +139,11 @@ with torch.no_grad():
     # dims,eps,shifts,pows,reps,_ = perfs.shape
     # Plot 3:
     # inverse plots
-    n_generations = 1000
-    fig, ax = plt.subplots(len(n_epsilons)+1, len(gaussian_powers), figsize=(10, 20))
-    for j, e in enumerate(n_epsilons):
-        for i, p in enumerate(gaussian_powers):
+    n_generations = 2000
+
+    fig, ax = plt.subplots( len(gaussian_powers),len(n_epsilons)+1, figsize=(12, 6))
+    for i, e in enumerate(n_epsilons):
+        for j, p in enumerate(gaussian_powers):
             ax[j, i].set_title(f"a={p}, B={e}")
             if p % 2 == 1:
                 ax[j, i].set_xlim((-3 ** p, 3 ** p))
@@ -153,9 +155,9 @@ with torch.no_grad():
                                       covariance_matrix=torch.diag(torch.ones(model_dict[(2, e, 0, p, 0)].Q))).sample(
                 (n_generations,))
             inverse = model_dict[(2, e, 0, p, 0)].inverse(data).detach().numpy()
-            ax[j, i].scatter(inverse[:, 0], inverse[:, 1], s=1)
-    for i,p in enumerate(gaussian_powers):
-        j = len(n_epsilons)
+            ax[j, i].scatter(inverse[:, 0], inverse[:, 1], s=1, c="black",alpha = 0.5)
+    for j,p in enumerate(gaussian_powers):
+        i = len(n_epsilons)
         if p % 2 == 1:
             ax[j, i].set_xlim((-3 ** p, 3 ** p))
             ax[j, i].set_ylim((-3 ** p, 3 ** p))
@@ -164,10 +166,21 @@ with torch.no_grad():
             ax[j, i].set_ylim((-0.5, 3 ** p))
         data = get_gaussian_samples(n_generations, 2, 0, p)
         ax[j,i].set_title(f"target for ψ={p}")
-        ax[j,i].scatter(data[:,0],data[:,1],c="red",s=1)
+        ax[j,i].scatter(data[:,0],data[:,1],c="red",s=1,alpha=0.5)
     # ax[0].set_ylabel("-Ll (b/d)")
     # ax[0].set_xlabel("B")
     plt.legend()
     plt.tight_layout()
+
     plt.savefig("/home/guus/PycharmProjects/Thesis/Plots/Gaussian_plot3.png")
     plt.show()
+
+    # dims,eps,shifts,pows,reps,_ = perfs.shape
+
+# Correlation
+for i,p in enumerate(gaussian_powers):
+    for j, d in enumerate(n_gaussian_dims):
+
+        # obs = np.stack([perfs_repav[j,:,0,i],np.array(n_epsilons)], axis=1).T
+        print(f"power:{p},dim{d}")
+        print(np.corrcoef(perfs_repav[j,:,0,i],np.array(n_epsilons))[1,0])

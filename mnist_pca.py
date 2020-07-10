@@ -22,10 +22,14 @@ for i in range(784):
         print(i, "99")
         break
 
-plt.plot([sum(pca.explained_variance_ratio_[:i]) for i in range(784)])
-plt.ylabel("Explained Variance")
-plt.xlabel("Principal Components")
-plt.grid(True)
+
+fig,ax = plt.subplots(1,1,figsize=(7,5))
+
+
+ax.plot([sum(pca.explained_variance_ratio_[:i]) for i in range(784)])
+ax.set_ylabel("Explained Variance")
+ax.set_xlabel("Principal Components")
+ax.grid(True)
 plt.savefig("/home/guus/PycharmProjects/Thesis/Plots/MNIST_varplot.png")
 plt.show()
 
