@@ -11,9 +11,8 @@ from plotters import plot_backward
 from utils import moving_average, reject_outliers
 from torch.utils.data import DataLoader
 
-folder = "/home/guus/PycharmProjects/Thesis/Runs/CIFAR104_2020-07-10 17:36:44.385099"
+folder = "/home/guus/PycharmProjects/Thesis/Runs/cifar_single_try"
 losses = pickle.load(open(folder+"/loss_list.p","rb"))
-model_state_dict_dict = pickle.load(open(folder+"/model_dict.p","rb"))
 n_epsilons = pickle.load(open(folder+"/n_epsilons.p","rb"))
 model_dict = {}
 n_pixels = 784
@@ -22,7 +21,7 @@ logtwo = np.log(2)
 # load the models
 for eps in n_epsilons:
     model_dict[eps] = marginalizingFlow(3*32*32, eps,n_layers = 4, mnist=True)
-    model_dict[eps].load_state_dict(model_state_dict_dict[eps])
+    model_dict[eps].load_state_dict(torch.load(folder+f"/CIFAR_4layers_{eps}eps_dict.p"))
     model_dict[eps].eval()
 
 fig,ax = plt.subplots(4,4,figsize=(16,16))

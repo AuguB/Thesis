@@ -61,7 +61,7 @@ class actnorm(nn.Module):
     # TODO Make the initiated a parameter
     def __init__(self, dim):
         super(actnorm, self).__init__()
-        self.initiated = True
+        self.initiated = nn.Parameter(torch.Tensor([False]), requires_grad=False)
         self.shift = nn.Parameter(torch.full((dim,), 0.), requires_grad=True)
         self.scale = nn.Parameter(torch.full((dim,), 0.), requires_grad=True)
         self.epsilon = 0.001
@@ -77,7 +77,7 @@ class actnorm(nn.Module):
                 newscale[newscale != newscale] = 1
                 newscale[torch.isinf(newscale)] = 1
                 self.scale.data = torch.pow(newscale, -1)
-                self.initiated = True
+                self.initiated.data = torch.Tensor([True])
 
         self.scale.data[self.scale.data != self.scale.data] = 1
         thisScale = self.scale.abs() + self.epsilon

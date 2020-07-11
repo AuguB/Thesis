@@ -4,7 +4,7 @@ from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import DataLoader
 from torch.optim import *
 from plotters import show_forward, show_backward, plot_backward, mnist_noised
-
+import matplotlib.pyplot as plt
 
 class MNISTTrainer:
     def __init__(self):
@@ -24,8 +24,9 @@ class MNISTTrainer:
                 this_iter +=1
                 print(f"\rTraining model {model_signature} {100 * (this_iter/total_iter)}% complete  ", end="")
                 v = v.reshape((v.shape[0],-1))
-                v_noised = v + (2*(torch.rand(v.shape)-0.5)) * 0.2
-                log_prob, _ = net(v_noised.type(torch.FloatTensor))
+                # v_noised = v + (2*(torch.rand(v.shape)-0.5)) * 0.2
+
+                log_prob, _ = net(v.type(torch.FloatTensor))
 
                 optim.zero_grad()
                 loss = -log_prob
@@ -41,9 +42,10 @@ class MNISTTrainer:
                 if i % loss_interval == 0:
                     losses.append(loss.mean().detach().numpy())
 
-                if (i % 100) == 0:
+                if (i % 10) == 0:
                     plot_backward(net, dataname)
-                    scheduler.step()
+                    if (i%100) == 0:
+                        scheduler.step()
 
             if torch.any(torch.isnan(loss.mean())):
                 break

@@ -103,7 +103,7 @@ def plot_backward(net, dataname):
             ax = ax.flatten()
             backward = net.inverse(data).detach().numpy()[:, :3*32*32]
             for i in range(4):
-                ax[i].imshow(np.reshape(backward[i], (32,32,3))*2+0.5)
+                ax[i].imshow( np.swapaxes(np.swapaxes(np.reshape(backward[i], (3,32,32))*2+0.5, 0, 2), 0, 1))
             plt.show()
             plt.close(fig)
 

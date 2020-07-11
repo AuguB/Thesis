@@ -5,23 +5,23 @@ import pickle
 from time import *
 import matplotlib.pyplot as plt
 #
-# n_epsilons = [0]
-# n_layers = 4
-# n_epochs = 1
-# batch_size = 1024
-# lr = 5e-4
-# decay = 0.99
-# n_pixels = 3*32*32
-
-
-
-n_epsilons = [0]
+n_epsilons = [0,1,2,4,8,16,32,64]
 n_layers = 4
-n_epochs = 1
-batch_size = 128
+n_epochs = 5
+batch_size = 64
 lr = 5e-4
 decay = 0.99
 n_pixels = 3*32*32
+
+#
+#
+# n_epsilons = [0]
+# n_layers = 4
+# n_epochs = 1
+# batch_size = 128
+# lr = 5e-4
+# decay = 0.99
+# n_pixels = 3*32*32
 
 start = time()
 # Create a folder to store the test results
@@ -40,7 +40,7 @@ for eps_i, epsilon in enumerate(n_epsilons):
     losses = trainer.train(net=flow, dataset=data, n_epochs=n_epochs, batch_size=batch_size, lr=lr, decay = decay,dataname="CIFAR10")
     rep_losses.append(losses)
     plt.plot(losses)
-    torch.save(flow.state_dict(),"/".join([current_test_folder, f"CIFAR_{n_layers}layers_{epsilon}eps_dict_.p"]))
+    torch.save(flow.state_dict(),"/".join([current_test_folder, f"CIFAR_{n_layers}layers_{epsilon}eps_dict.p"]))
 
 losses_filename = "/".join([current_test_folder, "loss_list.p"])
 pickle.dump(rep_losses, open(losses_filename, "wb"))
