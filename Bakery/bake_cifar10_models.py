@@ -40,11 +40,8 @@ for eps_i, epsilon in enumerate(n_epsilons):
     losses = trainer.train(net=flow, dataset=data, n_epochs=n_epochs, batch_size=batch_size, lr=lr, decay = decay,dataname="CIFAR10")
     rep_losses.append(losses)
     plt.plot(losses)
+    torch.save(flow.state_dict(),"/".join([current_test_folder, f"CIFAR_{n_layers}layers_{epsilon}eps_dict_.p"]))
 
-    model_dict[epsilon] = flow.state_dict()
-
-models_filename = "/".join([current_test_folder, "model_dict.p"])
-pickle.dump(model_dict, open(models_filename, "wb"))
 losses_filename = "/".join([current_test_folder, "loss_list.p"])
 pickle.dump(rep_losses, open(losses_filename, "wb"))
 

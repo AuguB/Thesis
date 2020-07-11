@@ -39,11 +39,11 @@ def build_mnist_flow(dim, n_layers=3):
     return normalizingFlow(module_list, dim)
 
 
-def get_CIFAR10():
+def get_CIFAR10(train=True):
     transform = transforms.Compose(
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-    trainset = tds.CIFAR10(root='../data', train=True,
+    trainset = tds.CIFAR10(root='../data', train=train,
                                             download=True, transform=transform)
     return trainset
 
