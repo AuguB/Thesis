@@ -30,7 +30,10 @@ for param in param_dict.keys():
 
 for tup in model_tups:
     model_dict[tup] = marginalizingFlow(tup[0], tup[1], 4)
+    for i in ["normalizingFlow.parts.0.initiated", "normalizingFlow.parts.5.initiated", "normalizingFlow.parts.10.initiated", "normalizingFlow.parts.15.initiated"]:
+        model_state_dict_dict[tup][i] = torch.Tensor([True])
     model_dict[tup].load_state_dict(model_state_dict_dict[tup])
+
     model_dict[tup].eval()
 
 with torch.no_grad():
@@ -144,7 +147,7 @@ with torch.no_grad():
     fig, ax = plt.subplots( len(gaussian_powers),len(n_epsilons)+1, figsize=(12, 6))
     for i, e in enumerate(n_epsilons):
         for j, p in enumerate(gaussian_powers):
-            ax[j, i].set_title(f"a={p}, B={e}")
+            ax[j, i].set_title(f"ψ={p}, B={e}")
             if p % 2 == 1:
                 ax[j, i].set_xlim((-3 ** p, 3 ** p))
                 ax[j, i].set_ylim((-3 ** p, 3 ** p))

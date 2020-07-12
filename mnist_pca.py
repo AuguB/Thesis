@@ -23,14 +23,20 @@ for i in range(784):
         break
 
 
-fig,ax = plt.subplots(1,1,figsize=(7,5))
+fig,ax = plt.subplots(2,1,figsize=(7,10), sharex=True)
+ax[0].plot(pca.explained_variance_ratio_, label = "Explained variance per PC",color = "red")
+ax[0].set_ylabel("Explained Variance")
+ax[0].set_xlabel("Principal Components")
+ax[0].grid(True)
+ax[0].legend()
 
+ax[1].plot([sum(pca.explained_variance_ratio_[:i]) for i in range(784)], label="Cumulative explained variance", color = "blue")
+ax[1].set_ylabel("Explained Variance")
+ax[1].grid(True)
+ax[1].legend()
 
-ax.plot([sum(pca.explained_variance_ratio_[:i]) for i in range(784)])
-ax.set_ylabel("Explained Variance")
-ax.set_xlabel("Principal Components")
-ax.grid(True)
 plt.savefig("/home/guus/PycharmProjects/Thesis/Plots/MNIST_varplot.png")
+plt.legend()
 plt.show()
 
 

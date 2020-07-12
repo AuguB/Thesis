@@ -2,6 +2,7 @@ import pickle
 import torch
 from torch.distributions import MultivariateNormal
 
+from Gym.mnist_trainer import MNISTTrainer
 from builder import build_px_samples, get_MNIST, get_CIFAR10
 from Flows.marginalizingflow import marginalizingFlow
 import numpy as np
@@ -11,36 +12,68 @@ from plotters import plot_backward
 from utils import moving_average, reject_outliers
 from torch.utils.data import DataLoader
 
-folder = "/home/guus/PycharmProjects/Thesis/Runs/cifar_single_try"
+folder = "/home/guus/PycharmProjects/Thesis/Runs/cifar_try"
 losses = pickle.load(open(folder+"/loss_list.p","rb"))
 n_epsilons = pickle.load(open(folder+"/n_epsilons.p","rb"))
 model_dict = {}
-n_pixels = 784
+n_pixels = 3*32*32
 logtwo = np.log(2)
+#
+eps = 0
 
-# load the models
-for eps in n_epsilons:
-    model_dict[eps] = marginalizingFlow(3*32*32, eps,n_layers = 4, mnist=True)
-    model_dict[eps].load_state_dict(torch.load(folder+f"/CIFAR_4layers_{eps}eps_dict.p"))
-    model_dict[eps].eval()
+checkpoint = torch.load(folder+f"/CIFAR_4layers_{eps}eps_dict.p")
+net = marginalizingFlow(n_pixels, eps,n_layers = 4, mnist=True)
+net.load_state_dict(checkpoint["model"])
+net.eval()
+
+data = MultivariateNormal(loc=torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((16,))
+inv = net.inverse(data).detach().numpy()
+
 
 fig,ax = plt.subplots(4,4,figsize=(16,16))
 ax = ax.flatten()
-net = model_dict[0]
-data = MultivariateNormal(loc=torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((16,))
-inv = net.inverse(data).detach().numpy()
 for i in range(16):
-    ax[i].imshow(inv[i].reshape((32,32,3)))
-plt.show()
+    ax[i].imshow(np.swapaxes(np.swapaxes(inv[i].reshape((3,32,32)),0,2),0,1))
 plt.savefig(f"{folder}/samples.png")
+plt.show()
+
+cont = True
+if cont:
+    lr = 5e-3
+    decay = 0.993
+    n_epochs = 1
+    batch = 64
+    data = build_px_samples(100,0,"CIFAR10")
+
+    trainer = MNISTTrainer()
+
+    net = marginalizingFlow(n_pixels, eps, n_layers=4, mnist=True)
+    net.load_state_dict(checkpoint["model"])
+    optim = torch.optim.Adam(net.parameters(), lr)
+    optim.load_state_dict(checkpoint["optim"])
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optim, decay)
+    scheduler.load_state_dict(checkpoint["scheduler"])
+    losses = trainer.train(net,data,optim,scheduler,batch,loss_interval = 1,dataname = "CIFAR10")
+
+    data = MultivariateNormal(loc=torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((16,))
+    inv = net.inverse(data).detach().numpy()
+
+
+    fig,ax = plt.subplots(4,4,figsize=(16,16))
+    ax = ax.flatten()
+    for i in range(16):
+        ax[i].imshow(np.swapaxes(np.swapaxes(inv[i].reshape((3,32,32)),0,2),0,1))
+    plt.savefig(f"{folder}/samples.png")
+    plt.show()
+
 # Plot the losses
-# loss_dict = {}
-# for i,v in enumerate(n_epsilons):
-#     loss_dict[v] = losses[i]
-#     losses_lookback = 20
-#     plt.plot(moving_average(loss_dict[v], losses_lookback))
-#     plt.show()
-#     # mnist_backward(model_dict[v], "")
+loss_dict = {}
+for i,v in enumerate(n_epsilons):
+    loss_dict[v] = losses[i]
+    losses_lookback = 20
+    plt.plot(moving_average(loss_dict[v], losses_lookback))
+    plt.show()
+    # mnist_backward(model_dict[v], "")
 #
 #
 # # Store the performances

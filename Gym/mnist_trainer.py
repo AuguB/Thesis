@@ -10,12 +10,10 @@ class MNISTTrainer:
     def __init__(self):
         pass
 
-    def train(self, net, dataset, n_epochs=300, batch_size=1, lr=1e-3, decay=1, model_signature="unknown model",
+    def train(self, net, dataset, optim,scheduler, n_epochs=300, batch_size=1, model_signature="unknown model",
               loss_interval=10,dataname = "MNIST"):
         losses = []
         loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
-        optim = Adam(net.parameters(), lr=lr)
-        scheduler = ExponentialLR(optim, decay)
         loss = 0
         total_iter = (50000/batch_size)*n_epochs
         this_iter = 0
