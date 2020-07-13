@@ -12,9 +12,9 @@ from plotters import plot_backward
 from utils import moving_average, reject_outliers
 from torch.utils.data import DataLoader
 
-folder = "/home/guus/PycharmProjects/Thesis/Runs/cifar_try"
-losses = pickle.load(open(folder+"/loss_list.p","rb"))
-n_epsilons = pickle.load(open(folder+"/n_epsilons.p","rb"))
+folder = "/home/guus/PycharmProjects/Thesis/Runs/cifar_checkpoints"
+# losses = pickle.load(open(folder+"/loss_list.p","rb"))
+# n_epsilons = pickle.load(open(folder+"/n_epsilons.p","rb"))
 model_dict = {}
 n_pixels = 3*32*32
 logtwo = np.log(2)
@@ -40,7 +40,7 @@ plt.show()
 cont = True
 if cont:
     lr = 5e-3
-    decay = 0.993
+    decay = 0.995
     n_epochs = 1
     batch = 64
     data = build_px_samples(100,0,"CIFAR10")
@@ -52,8 +52,8 @@ if cont:
     optim = torch.optim.Adam(net.parameters(), lr)
     optim.load_state_dict(checkpoint["optim"])
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optim, decay)
-    scheduler.load_state_dict(checkpoint["scheduler"])
-    losses = trainer.train(net,data,optim,scheduler,batch,loss_interval = 1,dataname = "CIFAR10")
+    # scheduler.load_state_dict(checkpoint["scheduler"])
+    losses = trainer.train(net,data,optim,scheduler,batch,dataname = "CIFAR10")
 
     data = MultivariateNormal(loc=torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((16,))
     inv = net.inverse(data).detach().numpy()
@@ -66,13 +66,13 @@ if cont:
     plt.savefig(f"{folder}/samples.png")
     plt.show()
 
-# Plot the losses
-loss_dict = {}
-for i,v in enumerate(n_epsilons):
-    loss_dict[v] = losses[i]
-    losses_lookback = 20
-    plt.plot(moving_average(loss_dict[v], losses_lookback))
-    plt.show()
+# # Plot the losses
+# loss_dict = {}
+# for i,v in enumerate(n_epsilons):
+#     loss_dict[v] = losses[i]
+#     losses_lookback = 20
+#     plt.plot(moving_average(loss_dict[v], losses_lookback))
+#     plt.show()
     # mnist_backward(model_dict[v], "")
 #
 #

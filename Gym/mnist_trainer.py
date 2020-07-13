@@ -1,36 +1,33 @@
 import numpy as np
 import torch
-from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import DataLoader
-from torch.optim import *
-from plotters import show_forward, show_backward, plot_backward, mnist_noised
-import matplotlib.pyplot as plt
-
+from plotters import plot_backward
+import math
 class MNISTTrainer:
     def __init__(self):
         pass
 
-    def train(self, net, dataset, optim,scheduler, n_epochs=300, batch_size=1, model_signature="unknown model",
-              loss_interval=10,dataname = "MNIST"):
+    def train(self, net, dataset, optim, n_epochs, batch_size=1, dataname = "MNIST"):
+
         losses = []
         loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
         loss = 0
-        total_iter = (50000/batch_size)*n_epochs
+        iter_per_epoch = dataset.data.shape[0]/batch_size
+        loss_interval = math.floor(iter_per_epoch/100)
+        total_iter = iter_per_epoch*n_epochs
         this_iter = 0
         for e in range(n_epochs):
             for i, (v,_) in enumerate(loader):
                 this_iter +=1
-                print(f"\rTraining model {model_signature} {100 * (this_iter/total_iter)}% complete  ", end="")
+                print(f"\rTraining model on {dataname} {100 * (this_iter/total_iter)}% complete  ", end="")
                 v = v.reshape((v.shape[0],-1))
-                # v_noised = v + (2*(torch.rand(v.shape)-0.5)) * 0.2
-
                 log_prob, _ = net(v.type(torch.FloatTensor))
 
                 optim.zero_grad()
                 loss = -log_prob
 
                 loss.mean().backward()
-                torch.nn.utils.clip_grad_norm_(net.parameters(), 0.6)
+                # torch.nn.utils.clip_grad_norm_(net.parameters(), 0.9)
 
                 optim.step()
 
@@ -42,12 +39,9 @@ class MNISTTrainer:
 
                 if (i % 10) == 0:
                     plot_backward(net, dataname)
-                    if (i%100) == 0:
-                        scheduler.step()
 
             if torch.any(torch.isnan(loss.mean())):
                 break
 
-            scheduler.step()
 
         return np.array(losses)

@@ -86,26 +86,34 @@ def show_backward(net, filename):
 
 def plot_backward(net, dataname):
     if dataname == "MNIST":
-        data = MultivariateNormal(loc = torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((4,))
-        with torch.no_grad():
-            fig, ax = plt.subplots(2,2,figsize=(5, 5))
-            ax = ax.flatten()
-            backward = net.inverse(data).detach().numpy()[:,:784]
-            for i in range(4):
-                ax[i].imshow(np.reshape(backward[i],(28,28)), cmap='Greys')
-            plt.show()
-            plt.close(fig)
-
+        plot_mnist_backward(net)
     else:
-        data = MultivariateNormal(loc=torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((4,))
-        with torch.no_grad():
-            fig, ax = plt.subplots(2, 2, figsize=(5, 5))
-            ax = ax.flatten()
-            backward = net.inverse(data).detach().numpy()[:, :3*32*32]
-            for i in range(4):
-                ax[i].imshow( np.swapaxes(np.swapaxes(np.reshape(backward[i], (3,32,32))*2+0.5, 0, 2), 0, 1))
-            plt.show()
-            plt.close(fig)
+        plot_cifar10_backward(net)
+
+def plot_mnist_backward(net):
+    data = MultivariateNormal(loc = torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((4,))
+    with torch.no_grad():
+        fig, ax = plt.subplots(2,2,figsize=(5, 5))
+        ax = ax.flatten()
+        backward = net.inverse(data).detach().numpy()[:,:784]
+        for i in range(4):
+            ax[i].imshow(np.reshape(backward[i],(28,28)), cmap='Greys')
+        plt.show()
+        plt.close(fig)
+
+def plot_cifar10_backward(net):
+    data = MultivariateNormal(loc=torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((4,))
+    with torch.no_grad():
+
+        backward = net.inverse(data).detach().numpy()[:, :3*32*32]
+        backward = np.swapaxes(np.swapaxes(np.reshape(backward, (4, 3, 32, 32)) * 2 + 0.5, 1, 3), 1, 2)
+        backward = np.clip(backward, 0, 1)
+        fig, ax = plt.subplots(2, 2, figsize=(5, 5))
+        ax = ax.flatten()
+        for i in range(4):
+            ax[i].imshow(backward[i])
+        plt.show()
+        plt.close(fig)
 
 def mnist_noised(noisy, natural):
     fig,ax = plt.subplots(1,2,figsize=(10,5))

@@ -7,14 +7,16 @@ from Gym.mnist_trainer import MNISTTrainer
 import pickle
 from time import *
 import matplotlib.pyplot as plt
+import numpy as np
+
+import warnings
 #
-n_epsilons = [0,1,2,4,8,16,32,64]
-n_layers = 4
-n_epochs = 10
-batch_size = 64
-lr = 1e-3
-decay = 0.995
-n_pixels = 3*32*32
+n_epsilons = [0,1,2,4,8,16,32]
+n_layers = 3
+n_epochs = 5
+batch_size = 8
+lr = 5e-4
+decay = 1
 
 start = time()
 # Create a folder to store the test results
@@ -26,19 +28,17 @@ pickle.dump(n_epsilons,open(f"{current_test_folder}/n_epsilons.p","wb"))
 model_dict = {}
 rep_losses = []
 data = build_px_samples(100,0,"CIFAR10")
-print(data.data.shape)
+inputDim = int(np.prod(data.data.shape[1:]))
 for eps_i, epsilon in enumerate(n_epsilons):
-    flow = marginalizingFlow(n_pixels, epsilon, n_layers=n_layers, mnist=True)
+    flow = marginalizingFlow(inputDim, epsilon, n_layers=n_layers, mnist=True)
     optim = Adam(flow.parameters(), lr = lr)
-    scheduler = ExponentialLR(optim, decay)
     trainer = MNISTTrainer()
-    losses= trainer.train(net=flow, dataset=data, optim = optim, scheduler=scheduler, n_epochs=n_epochs, batch_size=batch_size, dataname="CIFAR10")
+    losses= trainer.train(net=flow, dataset=data, optim = optim , n_epochs=n_epochs, batch_size=batch_size, dataname="CIFAR10")
     rep_losses.append(losses)
     plt.plot(losses)
     checkpoint = {
                   "optim":optim.state_dict(),
-                  "model":flow.state_dict(),
-                  "scheduler":scheduler.state_dict()
+                  "model":flow.state_dict()
                   }
     torch.save(checkpoint,"/".join([current_test_folder, f"CIFAR_{n_layers}layers_{epsilon}eps_dict.p"]))
 
