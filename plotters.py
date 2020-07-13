@@ -64,7 +64,7 @@ def show_forward(dataset, net, filename):
         plt.close()
 
 
-def show_backward(net, filename):
+def show_backward(net):
     data = MultivariateNormal(loc = torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((500,))
     with torch.no_grad():
         X = net.inverse(data).detach().numpy()
@@ -87,8 +87,10 @@ def show_backward(net, filename):
 def plot_backward(net, dataname):
     if dataname == "MNIST":
         plot_mnist_backward(net)
-    else:
+    elif dataname == "CIFAR10":
         plot_cifar10_backward(net)
+    else:
+        show_backward(net)
 
 def plot_mnist_backward(net):
     data = MultivariateNormal(loc = torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((4,))

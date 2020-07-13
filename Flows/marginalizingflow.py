@@ -1,19 +1,16 @@
 import torch
 from torch import nn
 from torch.distributions import MultivariateNormal
-from builder import build_flow, build_mnist_flow
+from builder import build_flow
 
 
 class marginalizingFlow(nn.Module):
-    def __init__(self, N, M, n_layers=4,mnist= False):
+    def __init__(self, N, M, n_layers=4):
         super(marginalizingFlow, self).__init__()
         self.N = N  # Dimension of original data
         self.M = M  # Dimension of epsilon
         self.Q = max(N + M, 2)  # Dimension of the flow (minimum two)
-        if not mnist:
-            self.normalizingFlow = build_flow(self.Q, n_layers)
-        else:
-            self.normalizingFlow = build_mnist_flow(self.Q, n_layers)
+        self.normalizingFlow = build_flow(self.Q, n_layers)
         if self.M > 0:
             self.eps = MultivariateNormal(
                 loc=torch.zeros(self.M),

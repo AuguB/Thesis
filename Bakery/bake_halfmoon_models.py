@@ -1,6 +1,6 @@
 from builder import *
 from Flows.marginalizingflow import marginalizingFlow
-from Gym.trainer import *
+from Gym.trainer_bak import *
 import pickle
 from time import *
 import math
@@ -39,7 +39,7 @@ for eps_i, epsilon in enumerate(n_epsilons):
 
         y = build_px_samples(n_samples, 0, "half_moons")
         flow = marginalizingFlow(2, epsilon, n_layers=6)
-        trainer = Trainer()
+        trainer = Trainer_bak()
 
         losses = trainer.train(net=flow, dataset=y, n_epochs=n_epochs, batch_size=batch_size, lr=lr,
                                decay=decay, model_signature=model_signature, loss_interval=loss_interval)

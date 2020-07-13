@@ -3,10 +3,8 @@ import torch
 from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import DataLoader
 from torch.optim import *
-from plotters import show_forward, show_backward, plot_backward
 
-
-class Trainer:
+class Trainer_bak:
     def __init__(self):
         pass
 
@@ -31,9 +29,6 @@ class Trainer:
 
                 if i % loss_interval == 0:
                     losses.append(lossmean.detach().numpy())
-            # if (e % 10) == 0:
-            #     # show_forward(dataset, net,"")
-            #     show_backward(net,"")
             scheduler.step()
 
             if torch.any(torch.isnan(loss.mean())):

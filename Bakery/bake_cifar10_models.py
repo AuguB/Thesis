@@ -3,7 +3,7 @@ from torch.optim import Adam
 
 from builder import *
 from Flows.marginalizingflow import marginalizingFlow
-from Gym.mnist_trainer import MNISTTrainer
+from Gym.Trainer import Trainer
 import pickle
 from time import *
 import matplotlib.pyplot as plt
@@ -15,7 +15,7 @@ n_epsilons = [0,1,2,4,8,16,32]
 n_layers = 3
 n_epochs = 5
 batch_size = 8
-lr = 5e-4
+lr = 0.001
 decay = 1
 
 start = time()
@@ -32,7 +32,7 @@ inputDim = int(np.prod(data.data.shape[1:]))
 for eps_i, epsilon in enumerate(n_epsilons):
     flow = marginalizingFlow(inputDim, epsilon, n_layers=n_layers, mnist=True)
     optim = Adam(flow.parameters(), lr = lr)
-    trainer = MNISTTrainer()
+    trainer = Trainer()
     losses= trainer.train(net=flow, dataset=data, optim = optim , n_epochs=n_epochs, batch_size=batch_size, dataname="CIFAR10")
     rep_losses.append(losses)
     plt.plot(losses)

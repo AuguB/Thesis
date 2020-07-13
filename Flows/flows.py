@@ -17,7 +17,6 @@ class shuffle(nn.Module):
     def inverse(self, A):
         return A @ (self.P.T)
 
-
 class coupling(nn.Module):
     def __init__(self, dim):
         self.max_exp = 10
@@ -42,7 +41,6 @@ class coupling(nn.Module):
         s = torch.clamp(s, self.min_exp, self.max_exp)
         outputpart1 = part1
         outputpart2 = (part2 * torch.exp(s)) + m
-
         output = torch.cat([outputpart1, outputpart2], 1)
         return output, torch.sum(s, 1)
 
@@ -55,10 +53,7 @@ class coupling(nn.Module):
         output = torch.cat([outputpart1, outputpart2], 1)
         return output
 
-
 class actnorm(nn.Module):
-
-    # TODO Make the initiated a parameter
     def __init__(self, dim):
         super(actnorm, self).__init__()
         self.initiated = nn.Parameter(torch.Tensor([False]), requires_grad=False)
@@ -78,7 +73,6 @@ class actnorm(nn.Module):
                 newscale[torch.isinf(newscale)] = 1
                 self.scale.data = torch.pow(newscale, -1)
                 self.initiated.data = torch.Tensor([True])
-
         self.scale.data[self.scale.data != self.scale.data] = 1
         thisScale = self.scale.abs() + self.epsilon
         A = ((A - self.shift) * thisScale)
