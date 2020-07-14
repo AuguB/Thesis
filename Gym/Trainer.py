@@ -20,6 +20,7 @@ class Trainer:
         this_iter = 0
 
         for e in range(n_epochs):
+            print(f"epoch {e} of {n_epochs} for {dataname}")
             for i, v in enumerate(loader):
                 this_iter += 1
                 # print(f"Training model on {dataname} {100 * (this_iter / total_iter)}% complete  ", end="")
