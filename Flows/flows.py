@@ -17,6 +17,7 @@ class shuffle(nn.Module):
     def inverse(self, A):
         return A @ (self.P.T)
 
+
 class coupling(nn.Module):
     def __init__(self, dim):
         self.max_exp = 10
@@ -26,7 +27,7 @@ class coupling(nn.Module):
         self.first = int(dim / 2)
         self.second = self.dim - self.first
         layers = []
-        bigsize = min([1000,self.first*3])
+        bigsize = min([1000, self.first * 3])
         sizes = [self.first] + ([bigsize] * 3) + [self.second * 2]
         for i in range(4):
             layers.append(nn.Linear(sizes[i], sizes[i + 1], True))
@@ -52,6 +53,7 @@ class coupling(nn.Module):
         outputpart2 = (part2 - m) * torch.exp(-s)
         output = torch.cat([outputpart1, outputpart2], 1)
         return output
+
 
 class actnorm(nn.Module):
     def __init__(self, dim):
