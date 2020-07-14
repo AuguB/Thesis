@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import torch
 import numpy as np
 
@@ -81,3 +83,8 @@ class Flattener(object):
 
     def __repr__(self):
         return self.__class__.__name__
+
+
+def timecode():
+    time = datetime.now()
+    return f"{time.year}-{time.month}-{time.day}_{time.hour}:{time.minute}:{time.second}"

@@ -1,20 +1,24 @@
 from Bakery.Baker import Baker
+from multiprocessing import Process, Lock
+
 from Tastery.Taster import Taster
-from builder import build_px_samples
 
 if __name__ == "__main__":
-    baker = Baker(batch_size=128, n_epochs = 1024, n_repeats=5)
-    baker.bake_gaussian_models(eps= [0, 1, 2, 3, 4],
-                               dims= [2, 3, 4],
-                               pow= [1, 2, 3],
-                               make_plots = False)
+    KMNISTbaker = Baker(n_layers=2, n_epochs=1, batch_size=1024)
+    KMNISTbaker.bake("KMNIST",[0],True)
 
-    # taster = Taster("/home/guus/PycharmProjects/Thesis/Runs/gaussian_2020-07-14 14:45:23.830946",True)
-    # taster.compute_neglogli(precomputed=False)
-    # taster.plot_avg_logli()
-    # taster.plot_min_logli()
-    # baker = Baker(n_layers=4, n_epochs=6)
+    # taster = Taster("/home/guus/PycharmProjects/Thesis/Runs/FMNIST_2020-7-14_21:8:0", False)
+    # taster.generate()
+
+    # MNISTbaker = Baker(n_layers=4, n_epochs=4, batch_size=32)
+    # FMNISTbaker = Baker(n_layers=4, n_epochs=4, batch_size=32)
+    # KMNISTbaker = Baker(n_layers=4, n_epochs=4, batch_size=32)
+    # GaussBaker = Baker(n_layers = 6, n_epochs=2048, batch_size = 128)
+    # HalfmoonBaker = Baker(n_layers = 4, n_epochs=2048, batch_size = 64)
     #
-    # baker.bake("MNIST",[0,1,2,3,4], noise = 0.2, clipNorm = 0.4, make_plots=True)
-    #
+    # processes = [
+    #     Process(target=MNISTbaker.bake, kwargs={"n_layers":4,"n_epochs":6,})
+    # ]
+
+
     # print("You can either bake some new models, or evaluate some old models")

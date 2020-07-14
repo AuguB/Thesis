@@ -22,7 +22,7 @@ class Baker:
     def bake(self, dataname, n_epsilons, noise=None, clipNorm=None, make_plots=False):
         self.dataname = dataname
         self.n_epsilons = n_epsilons
-        self.current_test_folder = make_top_folder(f"{self.dataname}{self.n_layers}")
+        self.current_test_folder = make_top_folder(f"{self.dataname}")
 
         info_dict = \
             {
@@ -59,17 +59,19 @@ class Baker:
                 }
                 torch.save(checkpoint, "/".join(
                     [self.current_test_folder, f"{self.dataname}_{epsilon}eps_{r}rep.p"]))
-        losses_filename = "/".join([self.current_test_folder, "loss_list.p"])
+        losses_filename = "/".join([self.current_test_folder, "loss_dict.p"])
         pickle.dump(loss_dict, open(losses_filename, "wb"))
         stop = time()
         duration = stop - start
         print(duration, " seconds")
+        print(f"The results are stored in {self.current_test_folder}")
+
 
     def bake_gaussian_models(self, eps, dims, pow, make_plots=False):
         self.n_epsilons = eps
         start = time()
         # Create a folder to store the test results
-        current_test_folder = make_top_folder(f"gaussian")
+        self.current_test_folder = make_top_folder(f"gaussian")
 
         # An object to hold all the losses, maps from tuple (distribution, epsilons) to ndarray(n_repeats, loss_observations)
         loss_dict = {}
@@ -78,7 +80,7 @@ class Baker:
         model_dict = {}
 
         # Files which make it easy to find the losses and the models
-        create_param_dict(current_test_folder,
+        create_param_dict(self.current_test_folder,
                           dims,
                           pow,
                           self.n_epsilons,
@@ -90,7 +92,7 @@ class Baker:
                 "n_layers": self.n_layers,
                 "dataname": "GAUSS"
             }
-        pickle.dump(info_dict, open(f"{current_test_folder}/info_dict.p", "wb"))
+        pickle.dump(info_dict, open(f"{self.current_test_folder}/info_dict.p", "wb"))
 
         total_number_of_runs = len(dims) \
                                * len(self.n_epsilons) \
@@ -117,15 +119,14 @@ class Baker:
                                                dataname=dataname,
                                                make_plots=make_plots)
 
-                        loss_dict[(gaussian_dim, pow, epsilon,  rep)] = losses
-                        print(len(losses))
+                        loss_dict[(gaussian_dim, pow, epsilon, rep)] = losses
                         plt.plot(losses)
                         plt.show()
                         checkpoint = {
                             "optim": optim.state_dict(),
                             "model": flow.state_dict()
                         }
-                        torch.save(checkpoint, "/".join([current_test_folder,
+                        torch.save(checkpoint, "/".join([self.current_test_folder,
                                                          f"{dataname}.p"]))
 
         # Plot the losses
@@ -136,12 +137,14 @@ class Baker:
         plt.title(f"{self.n_epochs}epochs {self.lr}lr")
         plt.show()
 
-        models_filename = "/".join([current_test_folder, "model_dict.p"])
+        models_filename = "/".join([self.current_test_folder, "model_dict.p"])
         pickle.dump(model_dict, open(models_filename, "wb"))
-        losses_filename = "/".join([current_test_folder, "loss_dict.p"])
+        losses_filename = "/".join([self.current_test_folder, "loss_dict.p"])
         pickle.dump(loss_dict, open(losses_filename, "wb"))
 
         stop = time()
         duration = stop - start
         print(duration, " seconds")
-        print(f"The results are stored in {current_test_folder}")
+        print(f"The results are stored in {self.current_test_folder}")
+
+

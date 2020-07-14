@@ -27,8 +27,8 @@ class coupling(nn.Module):
         self.first = int(dim / 2)
         self.second = self.dim - self.first
         layers = []
-        bigsize = min([1000, self.first * 3])
-        sizes = [self.first] + ([bigsize] * 3) + [self.second * 2]
+        max_hidden_units_per_layer = min([1500, self.first * 3])
+        sizes = [self.first] + ([max_hidden_units_per_layer] * 3) + [self.second * 2]
         for i in range(4):
             layers.append(nn.Linear(sizes[i], sizes[i + 1], True))
             layers.append(nn.ReLU())

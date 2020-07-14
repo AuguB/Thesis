@@ -41,7 +41,7 @@ def plot_performance(performance_storage, nth_distribution, distribution, n_epsi
     pass
 
 
-def show_forward(dataset, net, filename):
+def show_forward(dataset, net):
     with torch.no_grad():
         _, forward = net(dataset)
         forward = forward.detach().numpy()
@@ -60,7 +60,6 @@ def show_forward(dataset, net, filename):
             plt.title("Forward")
             plt.setp(ax, xlim = (-4,4), ylim = (-4,4))
         plt.show()
-        # plt.savefig(filename)
         plt.close()
 
 
@@ -68,14 +67,14 @@ def show_backward(net):
     data = MultivariateNormal(loc = torch.zeros(net.Q), covariance_matrix=torch.diag(torch.ones(net.Q))).sample((500,))
     with torch.no_grad():
         X = net.inverse(data).detach().numpy()
-        if data.data.shape[1] == 2:
+        if net.N == 2:
             fig, ax = plt.subplots(figsize=(7, 7))
             ax.scatter(X[:, 0], X[:, 1], alpha=fat_alpha,s=1)
             ax.set_title("Backward")
             ax.set_ylim((-4, 4))
             ax.set_xlim((-4, 4))
         else:
-            n_features = X.shape[1]
+            n_features = net.N
             fig, ax = plt.subplots(n_features, n_features, figsize=(7, 7))
             for i in range(n_features):
                 for j in range(n_features):
@@ -85,7 +84,7 @@ def show_backward(net):
         plt.close()
 
 def plot_backward(net, dataname):
-    if dataname == "MNIST":
+    if dataname.endswith("MNIST"):
         plot_mnist_backward(net)
     elif dataname == "CIFAR10":
         plot_cifar10_backward(net)

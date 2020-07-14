@@ -8,7 +8,7 @@ from Gym.My_Dataset import MyDataset
 from config import project_folder, runs_folder
 from Flows.flows import *
 from Flows.normalizingflow import *
-from utils import AddGaussianNoise, Flattener
+from utils import AddGaussianNoise, Flattener, timecode
 
 
 def build_flow(dim, n_layers=3):
@@ -25,14 +25,19 @@ def build_flow(dim, n_layers=3):
     return normalizingFlow(module_list, dim)
 
 
-def build_px_samples(distribution, gauss_params = None, n_samples=2048):
-
-    if distribution == "half_moons":
+def build_px_samples(distribution, gauss_params=None, n_samples=2048):
+    if distribution == "HALFMOONS":
         data, _ = datasets.make_moons(n_samples, shuffle=True, noise=0.1)
         return MyDataset(toTorch(data))
 
     elif distribution == "MNIST":
         return get_MNIST()
+
+    elif distribution == "FMNIST":
+        return get_FMNIST()
+
+    elif distribution == "KMNIST":
+        return get_KMNIST()
 
     elif distribution == "CIFAR10":
         return get_CIFAR10()
@@ -55,6 +60,7 @@ def get_MNIST(train=True):
     ])
     return MyDataset(dataset.data.numpy(), transform)
 
+
 def get_KMNIST(train=True):
     dataset = tds.KMNIST('../data', train=train, download=True)
     transform = transforms.Compose([
@@ -65,11 +71,12 @@ def get_KMNIST(train=True):
     ])
     return MyDataset(dataset.data.numpy(), transform)
 
+
 def get_FMNIST(train=True):
     dataset = tds.FashionMNIST('../data', train=train, download=True)
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,)),
+        transforms.Normalize((0.5,), (0.5,)),
         AddGaussianNoise(0, 0.2),
         Flattener()
     ])
@@ -99,13 +106,13 @@ def toTorch(A):
 
 def make_top_folder(name=""):
     current_test_folder = "/".join([project_folder, runs_folder,
-                                    f"{name}_{datetime.now()}"])
+                                    f"{name}_{timecode()}"])
     os.mkdir(current_test_folder)
     return current_test_folder
 
 
 def create_param_dict(main_folder, n_gaussian_dims,
-                        gaussian_powers,
+                      gaussian_powers,
                       n_epsilons,
                       n_repeats
                       ):
@@ -115,5 +122,5 @@ def create_param_dict(main_folder, n_gaussian_dims,
         "gaussian_powers": gaussian_powers,
         "n_epsilons": n_epsilons,
         "n_repeats": n_repeats
-        }
+    }
     pickle.dump(dict, open(filename, "wb"))

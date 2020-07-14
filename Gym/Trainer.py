@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import DataLoader
 import math
 
-from plotters import show_backward, plot_backward
+from plotters import plot_backward
 
 
 class Trainer:
@@ -21,10 +21,8 @@ class Trainer:
 
         for e in range(n_epochs):
             for i, v in enumerate(loader):
-
                 this_iter += 1
                 print(f"\rTraining model on {dataname} {100 * (this_iter / total_iter)}% complete  ", end="")
-
                 log_prob, _ = net(v)
                 optim.zero_grad()
                 loss = -log_prob
@@ -38,7 +36,7 @@ class Trainer:
             if make_plots:
                 plot_backward(net, dataname)
             if torch.any(torch.isnan(loss.mean())):
-                print("found nan")
+                # print("found nan")
                 break
 
         return np.array(losses)
