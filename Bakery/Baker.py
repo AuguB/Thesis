@@ -46,6 +46,7 @@ class Baker:
         inputDim = int(np.prod(data.data.shape[1:]))
         for eps_i, epsilon in enumerate(self.n_epsilons):
             for r in self.n_repeats:
+                print(f"Now going to train {self.dataname} with B={epsilon}, repeat {r}")
                 flow = marginalizingFlow(inputDim, epsilon, n_layers=self.n_layers)
                 optim = torch.optim.Adam(flow.parameters(), lr=self.lr)
                 trainer = Trainer()
@@ -57,6 +58,8 @@ class Baker:
                     "optim": optim.state_dict(),
                     "model": flow.state_dict()
                 }
+                print(f"Finished training {self.dataname} with B={epsilon}, repeat {r}")
+
                 torch.save(checkpoint, "/".join(
                     [self.current_test_folder, f"{self.dataname}_{epsilon}eps_{r}rep.p"]))
         losses_filename = "/".join([self.current_test_folder, "loss_dict.p"])
@@ -99,17 +102,13 @@ class Baker:
                                * len(self.n_repeats) \
                                * len(pow)
 
-        print(f"Going to train {total_number_of_runs} models")
-        i = 0
 
         for dim_i, gaussian_dim in enumerate(dims):
             for eps_i, epsilon in enumerate(self.n_epsilons):
                 for pow_i, pow in enumerate(pow):
                     for rep in self.n_repeats:
                         dataname = f"GAUSS_{gaussian_dim}dim_{pow}pow_{epsilon}eps_{rep}rep"
-                        print(f"Now training model on {dataname}")
-                        print(f"{round(100 * i / total_number_of_runs, 2)}% of all models trained   ")
-                        i += 1
+                        print(f"Now going to train {dataname}")
                         dataset = get_gaussian_samples(self.n_samples, gaussian_dim, pow)
                         flow = marginalizingFlow(N=gaussian_dim, M=epsilon, n_layers=self.n_layers)
                         optim = torch.optim.Adam(flow.parameters(), lr=self.lr)
@@ -126,6 +125,7 @@ class Baker:
                             "optim": optim.state_dict(),
                             "model": flow.state_dict()
                         }
+                        print(f"Finished training {dataname}")
                         torch.save(checkpoint, "/".join([self.current_test_folder,
                                                          f"{dataname}.p"]))
 
