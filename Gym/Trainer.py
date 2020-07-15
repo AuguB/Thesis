@@ -10,8 +10,10 @@ class Trainer:
     def __init__(self):
         pass
 
-    def train(self, net, dataset, optim, n_epochs, dataname="MNIST", batch_size=1,
+    def train(self, device, net, dataset, optim, n_epochs, dataname="MNIST", batch_size=1,
               clipNorm: float = None, make_plots=False):
+
+        net.to(device)
         losses = []
         loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
         iter_per_epoch = dataset.data.shape[0] / batch_size
@@ -23,6 +25,7 @@ class Trainer:
             print(f"epoch {e} of {n_epochs} for {dataname}")
             for i, v in enumerate(loader):
                 this_iter += 1
+                v.to(device)
                 # print(f"Training model on {dataname} {100 * (this_iter / total_iter)}% complete  ", end="")
                 log_prob, _ = net(v)
                 optim.zero_grad()

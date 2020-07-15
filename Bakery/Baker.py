@@ -10,13 +10,14 @@ import numpy as np
 
 
 class Baker:
-    def __init__(self, n_samples=2048, n_layers=6, n_epochs=1024, batch_size=16, lr=1e-3, n_repeats=1):
+    def __init__(self, device, n_samples=2048, n_layers=6, n_epochs=1024, batch_size=16, lr=1e-3, n_repeats=1):
         self.n_samples = n_samples
         self.n_layers = n_layers
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.lr = lr
         self.n_repeats = [i for i in range(n_repeats)]
+        self.device = device
         # Create a folder to store the test results
 
     def bake(self, dataname, n_epsilons, noise=None, clipNorm=None, make_plots=False):
@@ -50,7 +51,7 @@ class Baker:
                 flow = marginalizingFlow(inputDim, epsilon, n_layers=self.n_layers)
                 optim = torch.optim.Adam(flow.parameters(), lr=self.lr)
                 trainer = Trainer()
-                losses = trainer.train(net=flow, dataset=data, optim=optim, n_epochs=self.n_epochs,
+                losses = trainer.train(self.device, net=flow, dataset=data, optim=optim, n_epochs=self.n_epochs,
                                        batch_size=self.batch_size,
                                        dataname=self.dataname, clipNorm=clipNorm, make_plots=make_plots)
                 loss_dict[(epsilon, r)] = losses
@@ -70,7 +71,7 @@ class Baker:
         print(f"The results are stored in {self.current_test_folder}")
 
 
-    def bake_gaussian_models(self, eps, dims, pow, make_plots=False):
+    def bake_gaussian_models(self, eps, dims, pows, make_plots=False):
         self.n_epsilons = eps
         start = time()
         # Create a folder to store the test results
@@ -105,7 +106,7 @@ class Baker:
 
         for dim_i, gaussian_dim in enumerate(dims):
             for eps_i, epsilon in enumerate(self.n_epsilons):
-                for pow_i, pow in enumerate(pow):
+                for pow_i, pow in enumerate(pows):
                     for rep in self.n_repeats:
                         dataname = f"GAUSS_{gaussian_dim}dim_{pow}pow_{epsilon}eps_{rep}rep"
                         print(f"Now going to train {dataname}")
