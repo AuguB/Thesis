@@ -22,10 +22,10 @@ class Trainer:
         this_iter = 0
 
         for e in range(n_epochs):
-            print(f"epoch {e} of {n_epochs} for {dataname}")
             for i, v in enumerate(loader):
                 this_iter += 1
                 v = v.to(device)
+                print(f"\rTraining model on {dataname} {round(100 * (this_iter / total_iter),2)}% complete                                            ", end="")
                 log_prob, _ = net(v)
                 optim.zero_grad()
                 loss = -log_prob
@@ -34,7 +34,7 @@ class Trainer:
                     torch.nn.utils.clip_grad_norm_(net.parameters(), 0.4)
                 optim.step()
                 if i % loss_interval == 0:
-                    losses.append(loss.mean().cpu().detach().numpy())
+                    losses.append(loss.mean().cpudetach().numpy())
 
             if make_plots:
                 plot_backward(net, dataname)
