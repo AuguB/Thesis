@@ -7,17 +7,20 @@ class normalizingFlow(nn.Module):
         super(normalizingFlow, self).__init__()
         self.locs = nn.Parameter(torch.zeros(Q), requires_grad=False)
         self.cov = nn.Parameter(torch.diag(torch.ones(Q)),requires_grad=False)
-        self.pu = torch.distributions.MultivariateNormal(self.locs,self.cov)
+        self.pu = MultivariateNormal(self.locs,self.cov)
         self.parts = nn.ModuleList(modulelist) # a sequence of flows
         self.Q = Q
 
     def forward(self, A):
+
         cumm_logdet = torch.zeros_like(A[:, 0])
         for m in self.parts:
             A, logdet = m(A)
             cumm_logdet += logdet
         print(A.device.type)
         print(cumm_logdet.device.type)
+        print(self.pu.loc.device.type)
+        print(self.pu.covariance_matrix.device.type)
         return self.pu.log_prob(A) + cumm_logdet, A
 
     def inverse(self, A):
