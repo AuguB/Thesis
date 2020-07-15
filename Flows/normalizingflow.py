@@ -18,6 +18,11 @@ class normalizingFlow(nn.Module):
         for m in self.parts:
             A, logdet = m(A)
             cumm_logdet += logdet
+
+        print("Device of A:",A.device.type)
+        print("Device of cumm_logdet",cumm_logdet.device.type)
+        # print("Device of pu", self.pu.device.type)
+
         return self.pu.log_prob(A) + cumm_logdet, A
 
     def inverse(self, A):
