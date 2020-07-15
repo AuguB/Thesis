@@ -13,7 +13,7 @@ class Trainer:
     def train(self, device, net, dataset, optim, n_epochs, dataname="MNIST", batch_size=1,
               clipNorm: float = None, make_plots=False):
 
-        net.to(device)
+        net = net.to(device)
         losses = []
         loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
         iter_per_epoch = dataset.data.shape[0] / batch_size
