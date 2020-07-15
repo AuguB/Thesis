@@ -13,8 +13,8 @@ class marginalizingFlow(nn.Module):
         self.M = M  # Dimension of epsilon
         self.Q = max(N + M, 2)  # Dimension of the flow (minimum two)
         self.normalizingFlow = build_flow(self.Q, n_layers)
-        self.locs = nn.Parameter(torch.zeros(self.Q).to(device), requires_grad=False)
-        self.cov = nn.Parameter(torch.diag(torch.ones(self.Q).to(device)),requires_grad=False)
+        self.locs = nn.Parameter(torch.zeros(self.M).to(device), requires_grad=False)
+        self.cov = nn.Parameter(torch.diag(torch.ones(self.M).to(device)),requires_grad=False)
         if self.M > 0:
             self.eps = MultivariateNormal(self.locs,self.cov) # The distribution to sample epsilon
 
