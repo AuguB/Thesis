@@ -86,7 +86,7 @@ class Baker:
         # Files which make it easy to find the losses and the models
         create_param_dict(self.current_test_folder,
                           dims,
-                          pow,
+                          pows,
                           self.n_epsilons,
                           self.n_repeats
                           )
@@ -101,7 +101,7 @@ class Baker:
         total_number_of_runs = len(dims) \
                                * len(self.n_epsilons) \
                                * len(self.n_repeats) \
-                               * len(pow)
+                               * len(pows)
 
 
         for dim_i, gaussian_dim in enumerate(dims):
