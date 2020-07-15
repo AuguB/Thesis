@@ -18,10 +18,6 @@ class normalizingFlow(nn.Module):
         for m in self.parts:
             A, logdet = m(A)
             cumm_logdet += logdet
-        print(A.device.type)
-        print(cumm_logdet.device.type)
-        print(self.pu.loc.device.type)
-        print(self.pu.covariance_matrix.device.type)
         return self.pu.log_prob(A) + cumm_logdet, A
 
     def inverse(self, A):
