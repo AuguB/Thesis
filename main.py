@@ -6,8 +6,8 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Going to train models on {device}")
 
-    MNISTbaker = Baker(device,n_layers=4, n_epochs=6, batch_size=32, lr=5e-4)
-    MNISTbaker.bake("MNIST",[ 0,1,2,4,8,16], noise=0.2,clipNorm=0.6)
+    MNISTbaker = Baker(device,n_layers=4, n_epochs=1, batch_size=32, lr=5e-4)
+    MNISTbaker.bake("MNIST",[ 0], noise=0.2,clipNorm=0.6)
 
     # MNISTbaker = Baker(device,n_layers=4, n_epochs=6, batch_size=32, lr=5e-4)
     # FMNISTbaker = Baker(device,n_layers=4, n_epochs=6, batch_size=32, lr=5e-4)
