@@ -114,7 +114,7 @@ class Baker:
                         flow = marginalizingFlow(N=gaussian_dim, M=epsilon, n_layers=self.n_layers)
                         optim = torch.optim.Adam(flow.parameters(), lr=self.lr)
                         trainer = Trainer()
-                        losses = trainer.train(net=flow, dataset=dataset, optim=optim, n_epochs=self.n_epochs,
+                        losses = trainer.train(self.device,net=flow, dataset=dataset, optim=optim, n_epochs=self.n_epochs,
                                                batch_size=self.batch_size,
                                                dataname=dataname,
                                                make_plots=make_plots)
