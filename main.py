@@ -3,7 +3,7 @@ from Bakery.Taster import Taster
 from multiprocessing import Process
 import torch
 if __name__ == "__main__":
-    device = torch.device("cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Going to train models on {device}")
 
     MNISTbaker = Baker(device,n_layers=4, n_epochs=6, batch_size=32, lr=5e-4)

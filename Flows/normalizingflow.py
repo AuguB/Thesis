@@ -5,7 +5,7 @@ from torch.distributions import MultivariateNormal
 class normalizingFlow(nn.Module):
     def __init__(self, modulelist, Q):
         super(normalizingFlow, self).__init__()
-        device = torch.device("cpu")
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.locs = torch.zeros(Q).to(device)
         self.cov = torch.diag(torch.ones(Q)).to(device)
         self.pu = MultivariateNormal(self.locs,self.cov)
