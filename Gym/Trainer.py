@@ -25,7 +25,7 @@ class Trainer:
             for i, v in enumerate(loader):
                 this_iter += 1
                 v = v.to(device)
-                print(f"\rTraining model on {dataname} {round(100 * (this_iter / total_iter),2)}% complete                                            ", end="")
+                print(f"\rTraining model on {dataname} {round(100 * (this_iter / total_iter),2)}% complete   ", end="")
                 log_prob, _ = net(v)
                 optim.zero_grad()
                 loss = -log_prob
