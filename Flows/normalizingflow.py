@@ -9,15 +9,15 @@ class normalizingFlow(nn.Module):
         self.cov = nn.Parameter(torch.diag(torch.ones(Q)),requires_grad=False)
         self.pu = torch.distributions.MultivariateNormal(self.locs,self.cov)
         self.parts = nn.ModuleList(modulelist) # a sequence of flows
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.Q = Q
 
     def forward(self, A):
         cumm_logdet = torch.zeros_like(A[:, 0])
-        cumm_logdet.to(self.device)
         for m in self.parts:
             A, logdet = m(A)
             cumm_logdet += logdet
+        print(A.device.type)
+        print(cumm_logdet.device.type)
         return self.pu.log_prob(A) + cumm_logdet, A
 
     def inverse(self, A):
