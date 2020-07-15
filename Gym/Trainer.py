@@ -34,7 +34,7 @@ class Trainer:
                     torch.nn.utils.clip_grad_norm_(net.parameters(), 0.4)
                 optim.step()
                 if i % loss_interval == 0:
-                    losses.append(loss.mean().cpudetach().numpy())
+                    losses.append(loss.mean().cpu().detach().numpy())
 
             if make_plots:
                 plot_backward(net, dataname)
