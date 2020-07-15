@@ -34,12 +34,9 @@ class coupling(nn.Module):
             layers.append(nn.ReLU())
         layers.pop()
         self.NN = nn.Sequential(*layers)
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.NN.to(self.device)
 
     def forward(self, A):
         part1, part2 = A.split([self.first, self.second], 1)
-        part1.to(self.device)
         ms = self.NN(part1)
         m, s = ms.split(self.second, 1)
         s = torch.clamp(s, self.min_exp, self.max_exp)

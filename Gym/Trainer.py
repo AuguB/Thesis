@@ -25,7 +25,7 @@ class Trainer:
             print(f"epoch {e} of {n_epochs} for {dataname}")
             for i, v in enumerate(loader):
                 this_iter += 1
-                v.to(device)
+                v = v.to(device)
                 print(f"\rTraining model on {dataname} {100 * (this_iter / total_iter)}% complete  ", end="")
                 log_prob, _ = net(v)
                 optim.zero_grad()
