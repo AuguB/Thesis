@@ -11,10 +11,10 @@ class marginalizingFlow(nn.Module):
         self.M = M  # Dimension of epsilon
         self.Q = max(N + M, 2)  # Dimension of the flow (minimum two)
         self.normalizingFlow = build_flow(self.Q, n_layers)
-        self.locs = nn.Parameter(torch.zeros(self.Q))
-        self.cov = nn.Parameter(torch.diag(torch.ones(self.Q)))
+        self.locs = nn.Parameter(torch.zeros(self.Q), requires_grad=False)
+        self.cov = nn.Parameter(torch.diag(torch.ones(self.Q)),requires_grad=False)
         if self.M > 0:
-            self.eps = MultivariateNormal(self.locs,self.cov) # The distribution to sample epsilon
+            self.eps = MultivariateNormal(self.locs.to,self.cov) # The distribution to sample epsilon
 
     def forward(self, A, marginalize=False, n_samples=200):
         if (not marginalize) or (self.M == 0):
