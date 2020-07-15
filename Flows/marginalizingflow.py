@@ -7,12 +7,14 @@ from builder import build_flow
 class marginalizingFlow(nn.Module):
     def __init__(self, N, M, n_layers=4):
         super(marginalizingFlow, self).__init__()
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
         self.N = N  # Dimension of original data
         self.M = M  # Dimension of epsilon
         self.Q = max(N + M, 2)  # Dimension of the flow (minimum two)
         self.normalizingFlow = build_flow(self.Q, n_layers)
-        self.locs = nn.Parameter(torch.zeros(self.Q), requires_grad=False)
-        self.cov = nn.Parameter(torch.diag(torch.ones(self.Q)),requires_grad=False)
+        self.locs = nn.Parameter(torch.zeros(self.Q).to(device), requires_grad=False)
+        self.cov = nn.Parameter(torch.diag(torch.ones(self.Q).to(device)),requires_grad=False)
         if self.M > 0:
             self.eps = MultivariateNormal(self.locs,self.cov) # The distribution to sample epsilon
 

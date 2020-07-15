@@ -6,7 +6,7 @@ if __name__ == "__main__":
     print(f"Going to train models on {device}")
 
     MNISTbaker = Baker(device,n_layers=4, n_epochs=10, batch_size=32, lr=5e-4)
-    MNISTbaker.bake("MNIST",[0, 1, 2, 4, 8, 16],0.2,0.6)
+    MNISTbaker.bake("MNIST",[1, 2, 4, 8, 16],0.2,0.6)
     FMNISTbaker = Baker(device,n_layers=4, n_epochs=10, batch_size=32, lr=5e-4)
     FMNISTbaker.bake("FMNIST", [0, 1, 2, 4, 8, 16], 0.2, 0.6)
     KMNISTbaker = Baker(device,n_layers=4, n_epochs=10, batch_size=32, lr=5e-4)
