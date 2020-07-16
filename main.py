@@ -11,7 +11,7 @@ if __name__ == "__main__":
     # FMNISTbaker.bake("FMNIST", [0, 1, 2, 4, 8, 16], 0.15, 0.6)
     # KMNISTbaker = Baker(device,n_layers=4, n_epochs=10, batch_size=32, lr=5e-4)
     # KMNISTbaker.bake("KMNIST", [0, 1, 2, 4, 8, 16], 0.15, 0.6)
-    Gaussbaker = Baker(device,n_samples = 4096,n_layers=4, n_epochs=2048, batch_size=256, n_repeats=10)
+    Gaussbaker = Baker(device,n_samples = 2048,n_layers=4, n_epochs=1024, batch_size=256, n_repeats=10)
     Gaussbaker.bake_gaussian_models([0, 1, 2, 3, 4], [2,3,4],[1,2,3])
     Halfmoonbaker = Baker(device,n_samples = 4096,n_layers=4, n_epochs=2048, batch_size=16, n_repeats=10)
     Halfmoonbaker.bake("HALFMOONS", [0, 1, 2, 3, 4])

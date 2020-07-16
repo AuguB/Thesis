@@ -135,8 +135,6 @@ class Baker:
         lookback = 16
         losses = [np.mean(losses[i:i + lookback]) for i in range(len(losses) - lookback)]
         ax.plot(losses)
-        plt.title(f"{self.n_epochs}epochs {self.lr}lr")
-        plt.show()
 
         models_filename = "/".join([self.current_test_folder, "model_dict.p"])
         pickle.dump(model_dict, open(models_filename, "wb"))
