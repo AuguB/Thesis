@@ -3,14 +3,11 @@ from torch import nn
 from torch.distributions import MultivariateNormal
 
 class normalizingFlow(nn.Module):
-    def __init__(self, modulelist, Q, device = None):
+    def __init__(self, modulelist, Q):
         super(normalizingFlow, self).__init__()
-        if not device:
-            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        else:
-            self.device = device
-        self.locs = torch.zeros(Q).to(self.device)
-        self.cov = torch.diag(torch.ones(Q)).to(self.device)
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.locs = torch.zeros(Q).to(device)
+        self.cov = torch.diag(torch.ones(Q)).to(device)
         self.pu = MultivariateNormal(self.locs,self.cov)
         self.parts = nn.ModuleList(modulelist) # a sequence of flows
         self.Q = Q
@@ -43,7 +40,7 @@ class normalizingFlow(nn.Module):
             cov =  (C.T @ C) / (sample_size-1)
             approximate_gaussian = torch.distributions.MultivariateNormal(loc = mean,covariance_matrix=cov)
             true_gaussian = self.pu
-            kl_div = torch.distributions.kl_divergence(true_gaussian, approximate_gaussian).cpu().detach().numpy()
+            kl_div = torch.distributions.kl_divergence(true_gaussian, approximate_gaussian).detach().numpy()
 
             return log_prob, kl_div
 
