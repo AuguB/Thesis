@@ -49,7 +49,7 @@ class Baker:
         for eps_i, epsilon in enumerate(self.n_epsilons):
             for r in self.n_repeats:
                 print(f"Now going to train {self.dataname} with B={epsilon}, repeat {r}")
-                flow = marginalizingFlow(inputDim, epsilon, n_layers=self.n_layers, device=self.device)
+                flow = marginalizingFlow(inputDim, epsilon, n_layers=self.n_layers)
                 optim = torch.optim.Adam(flow.parameters(), lr=self.lr)
                 trainer = Trainer()
                 losses = trainer.train(self.device, net=flow, dataset=data, optim=optim, n_epochs=self.n_epochs,
@@ -128,7 +128,7 @@ class Baker:
         dataname = f"GAUSS_{gaussian_dim}dim_{pow}pow_{epsilon}eps_{rep}rep"
         print(f"Now going to train {dataname}")
         dataset = get_gaussian_samples(self.n_samples, gaussian_dim, pow)
-        flow = marginalizingFlow(N=gaussian_dim, M=epsilon, n_layers=self.n_layers, device=self.device)
+        flow = marginalizingFlow(N=gaussian_dim, M=epsilon, n_layers=self.n_layers)
         optim = torch.optim.Adam(flow.parameters(), lr=self.lr)
         trainer = Trainer()
         losses = trainer.train(self.device, net=flow, dataset=dataset, optim=optim, n_epochs=self.n_epochs,
