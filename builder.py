@@ -11,7 +11,9 @@ from Flows.normalizingflow import *
 from utils import AddGaussianNoise, Flattener, timecode
 
 
-def build_flow(dim, n_layers=3):
+def build_flow(dim, n_layers=3, device = None):
+    if not device:
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     module_list = []
     module_list.append(actnorm(dim))
     for l in range(n_layers):
@@ -22,7 +24,7 @@ def build_flow(dim, n_layers=3):
         module_list.append(actnorm(dim))
     module_list.pop()
     module_list.pop()
-    return normalizingFlow(module_list, dim)
+    return normalizingFlow(module_list, dim, device)
 
 
 def build_px_samples(distribution, gauss_params=None, n_samples=2048):

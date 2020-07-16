@@ -7,6 +7,7 @@ import pickle
 from time import *
 import matplotlib.pyplot as plt
 import numpy as np
+from multiprocessing import Process, Lock
 
 
 class Baker:
@@ -70,7 +71,6 @@ class Baker:
         print(duration, " seconds")
         print(f"The results are stored in {self.current_test_folder}")
 
-
     def bake_gaussian_models(self, eps, dims, pows, make_plots=False):
         self.n_epsilons = eps
         start = time()
@@ -103,41 +103,17 @@ class Baker:
                                * len(self.n_repeats) \
                                * len(pows)
 
-
+        lock = Lock
         for dim_i, gaussian_dim in enumerate(dims):
             for eps_i, epsilon in enumerate(self.n_epsilons):
                 for pow_i, pow in enumerate(pows):
+                    processes = []
                     for rep in self.n_repeats:
-                        dataname = f"GAUSS_{gaussian_dim}dim_{pow}pow_{epsilon}eps_{rep}rep"
-                        print(f"Now going to train {dataname}")
-                        dataset = get_gaussian_samples(self.n_samples, gaussian_dim, pow)
-                        flow = marginalizingFlow(N=gaussian_dim, M=epsilon, n_layers=self.n_layers)
-                        optim = torch.optim.Adam(flow.parameters(), lr=self.lr)
-                        trainer = Trainer()
-                        losses = trainer.train(self.device,net=flow, dataset=dataset, optim=optim, n_epochs=self.n_epochs,
-                                               batch_size=self.batch_size,
-                                               dataname=dataname,
-                                               make_plots=make_plots)
-
-                        loss_dict[(gaussian_dim, pow, epsilon, rep)] = losses
-                        plt.plot(losses)
-                        plt.show()
-                        checkpoint = {
-                            "optim": optim.state_dict(),
-                            "model": flow.state_dict()
-                        }
-                        print(f"Finished training {dataname}")
-                        torch.save(checkpoint, "/".join([self.current_test_folder,
-                                                         f"{dataname}.p"]))
-
-        # Plot the losses
-        fig, ax = plt.subplots(1, 1)
-        lookback = 16
-        losses = [np.mean(losses[i:i + lookback]) for i in range(len(losses) - lookback)]
-        ax.plot(losses)
-        plt.title(f"{self.n_epochs}epochs {self.lr}lr")
-        plt.show()
-
+                        processes.append(Process(target=self.gaussian_bake_process, args=(
+                        lock, epsilon, gaussian_dim, loss_dict, make_plots, pow, rep)))
+                        processes[-1].start()
+                    for p in processes:
+                        p.join()
         models_filename = "/".join([self.current_test_folder, "model_dict.p"])
         pickle.dump(model_dict, open(models_filename, "wb"))
         losses_filename = "/".join([self.current_test_folder, "loss_dict.p"])
@@ -148,4 +124,24 @@ class Baker:
         print(duration, " seconds")
         print(f"The results are stored in {self.current_test_folder}")
 
-
+    def gaussian_bake_process(self,lock, epsilon, gaussian_dim, loss_dict, make_plots, pow, rep):
+        dataname = f"GAUSS_{gaussian_dim}dim_{pow}pow_{epsilon}eps_{rep}rep"
+        print(f"Now going to train {dataname}")
+        dataset = get_gaussian_samples(self.n_samples, gaussian_dim, pow)
+        flow = marginalizingFlow(N=gaussian_dim, M=epsilon, n_layers=self.n_layers)
+        optim = torch.optim.Adam(flow.parameters(), lr=self.lr)
+        trainer = Trainer()
+        losses = trainer.train(self.device, net=flow, dataset=dataset, optim=optim, n_epochs=self.n_epochs,
+                               batch_size=self.batch_size,
+                               dataname=dataname,
+                               make_plots=make_plots)
+        lock.acquire()
+        loss_dict[(gaussian_dim, pow, epsilon, rep)] = losses
+        lock.release()
+        checkpoint = {
+            "optim": optim.state_dict(),
+            "model": flow.state_dict()
+        }
+        print(f"Finished training {dataname}")
+        torch.save(checkpoint, "/".join([self.current_test_folder,
+                                         f"{dataname}.p"]))
