@@ -7,28 +7,28 @@ class shuffle(nn.Module):
         super(shuffle, self).__init__()
         self.flip = nn.Parameter(torch.tensor([flip]), requires_grad=False)
         if not self.flip:
-            self.P = nn.Parameter(torch.diag(torch.ones(dim))[torch.randperm(dim)], requires_grad=False)
+            self.permutation = nn.Parameter(torch.diag(torch.ones(dim))[torch.randperm(dim)], requires_grad=False)
         else:
-            self.P = nn.Parameter(torch.diag(torch.ones(dim)).flip(0), requires_grad=False)
+            self.permutation = nn.Parameter(torch.diag(torch.ones(dim)).flip(0), requires_grad=False)
 
     def forward(self, A):
-        return A @ self.P, 0.
+        return A @ self.permutation, 0.
 
     def inverse(self, A):
-        return A @ (self.P.T)
+        return A @ (self.permutation.T)
 
 
 class coupling(nn.Module):
     def __init__(self, dim):
-        self.max_exp = 10
-        self.min_exp = -10
+        self.max_exponent = 10
+        self.min_exponent = -10
         super(coupling, self).__init__()
         self.dim = dim
-        self.first = int(dim / 2)
-        self.second = self.dim - self.first
+        self.dim_of_first_half = int(dim / 2)
+        self.dim_of_second_half = self.dim - self.dim_of_first_half
         layers = []
-        max_hidden_units_per_layer = min([1500, self.first * 3])
-        sizes = [self.first] + ([max_hidden_units_per_layer] * 3) + [self.second * 2]
+        max_hidden_units_per_layer = min([1500, self.dim_of_first_half * 3])
+        sizes = [self.dim_of_first_half] + ([max_hidden_units_per_layer] * 3) + [self.dim_of_second_half * 2]
         for i in range(4):
             layers.append(nn.Linear(sizes[i], sizes[i + 1], True))
             layers.append(nn.ReLU())
@@ -36,22 +36,22 @@ class coupling(nn.Module):
         self.NN = nn.Sequential(*layers)
 
     def forward(self, A):
-        part1, part2 = A.split([self.first, self.second], 1)
-        ms = self.NN(part1)
-        m, s = ms.split(self.second, 1)
-        s = torch.clamp(s, self.min_exp, self.max_exp)
-        outputpart1 = part1
-        outputpart2 = (part2 * torch.exp(s)) + m
-        output = torch.cat([outputpart1, outputpart2], 1)
-        return output, torch.sum(s, 1)
+        first_half_in, second_half_in = A.split([self.dim_of_first_half, self.dim_of_second_half], 1)
+        shift_and_scale = self.NN(first_half_in)
+        shift, scale = shift_and_scale.split(self.dim_of_second_half, 1)
+        scale = torch.clamp(scale, self.min_exponent, self.max_exponent)
+        first_half_out = first_half_in
+        second_half_out = (second_half_in * torch.exp(scale)) + shift
+        output = torch.cat([first_half_out, second_half_out], 1)
+        return output, torch.sum(scale, 1)
 
     def inverse(self, A):
-        part1, part2 = A.split([self.first, self.second], 1)
-        ms = self.NN(part1)
-        m, s = ms.split(self.second, 1)
-        outputpart1 = part1
-        outputpart2 = (part2 - m) * torch.exp(-s)
-        output = torch.cat([outputpart1, outputpart2], 1)
+        first_half_in, first_half_out = A.split([self.dim_of_first_half, self.dim_of_second_half], 1)
+        shift_and_scale = self.NN(first_half_in)
+        shift, scale = shift_and_scale.split(self.dim_of_second_half, 1)
+        first_half_out = first_half_in
+        first_half_in = (first_half_out - shift) * torch.exp(-scale)
+        output = torch.cat([first_half_out, first_half_in], 1)
         return output
 
 
@@ -61,7 +61,7 @@ class actnorm(nn.Module):
         self.initiated = nn.Parameter(torch.Tensor([False]), requires_grad=False)
         self.shift = nn.Parameter(torch.full((dim,), 0.), requires_grad=True)
         self.scale = nn.Parameter(torch.full((dim,), 0.), requires_grad=True)
-        self.epsilon = 0.001
+        self.epsilon = 1e-3
 
     def forward(self, A):
         # This is causing issues (divide by zero stuff)
@@ -76,11 +76,10 @@ class actnorm(nn.Module):
                 self.scale.data = torch.pow(newscale, -1)
                 self.initiated.data = torch.Tensor([True])
         self.scale.data[self.scale.data != self.scale.data] = 1
-        thisScale = self.scale.abs() + self.epsilon
-        A = ((A - self.shift) * thisScale)
-        return A, torch.sum(torch.log(thisScale))
+        current_scale = self.scale.abs() + self.epsilon
+        A = ((A - self.shift) * current_scale)
+        return A, torch.sum(torch.log(current_scale))
 
     def inverse(self, A):
-        thisScale = self.scale.abs() + self.epsilon
-
-        return ((A * torch.pow(thisScale, -1)) + self.shift)
+        current_scale = self.scale.abs() + self.epsilon
+        return ((A * torch.pow(current_scale, -1)) + self.shift)

@@ -1,8 +1,6 @@
-import math
-
 from builder import *
 from Flows.marginalizingflow import marginalizingFlow
-from Gym.Trainer import Trainer
+from Gym.Trainer import Trainer, train
 import pickle
 from time import *
 import matplotlib.pyplot as plt
@@ -18,64 +16,46 @@ class Baker:
         self.lr = lr
         self.n_repeats = [i for i in range(n_repeats)]
         self.device = device
-        # Create a folder to store the test results
 
-    def bake(self, dataname, n_epsilons, noise=None, clipNorm=None, make_plots=False):
-        self.dataname = dataname
-        self.n_epsilons = n_epsilons
-        self.current_test_folder = make_top_folder(f"{self.dataname}")
-
-        info_dict = \
-            {
-                "n_layers": self.n_layers,
-                "dataname": self.dataname,
-                "noise": noise,
-                "clipNorm": clipNorm
-            }
-        pickle.dump(info_dict, open(f"{self.current_test_folder}/info_dict.p", "wb"))
-
-        param_dict = \
-            {
-                "n_epsilons": self.n_epsilons,
-                "n_repeats": self.n_repeats,
-            }
-        pickle.dump(param_dict, open(f"{self.current_test_folder}/param_dict.p", "wb"))
+    def bake(self, name_of_data, auxilliary_dimensons_list, noise=None, clip_norm=None, make_plots=False):
+        self.name_of_data = name_of_data
+        self.auxilliary_dimensons_list = auxilliary_dimensons_list
+        self.folder = make_folder_for_data(f"{self.name_of_data}")
+        self.make_and_store_param_dicts(clip_norm, noise)
 
         loss_dict = {}
-        start = time()
-        data = build_px_samples(self.dataname, self.n_samples)
-        inputDim = int(np.prod(data.data.shape[1:]))
-        for eps_i, epsilon in enumerate(self.n_epsilons):
-            for r in self.n_repeats:
-                print(f"Now going to train {self.dataname} with B={epsilon}, repeat {r}")
-                flow = marginalizingFlow(inputDim, epsilon, n_layers=self.n_layers)
+        start_time = time()
+        data = build_px_samples(self.name_of_data, self.n_samples)
+        data_dimensions = int(np.prod(data.data.shape[1:]))
+        for auxiliary_dimension_i, auxiliary_dimension in enumerate(self.auxilliary_dimensons_list):
+            for repeat in self.n_repeats:
+                print(f"Now going to train {self.name_of_data} with B={auxiliary_dimension}, repeat {repeat}")
+                flow = marginalizingFlow(data_dimensions, auxiliary_dimension, n_layers=self.n_layers)
                 optim = torch.optim.Adam(flow.parameters(), lr=self.lr)
-                trainer = Trainer()
-                losses = trainer.train(self.device, net=flow, dataset=data, optim=optim, n_epochs=self.n_epochs,
-                                       batch_size=self.batch_size,
-                                       dataname=self.dataname, clipNorm=clipNorm, make_plots=make_plots)
-                loss_dict[(epsilon, r)] = losses
+                losses = train(self.device, flow=flow, dataset=data, optim=optim, n_epochs=self.n_epochs,
+                               batch_size=self.batch_size,
+                               name_of_data=self.name_of_data, clip_norm=clip_norm, make_plots=make_plots)
+                loss_dict[(auxiliary_dimension, repeat)] = losses
                 checkpoint = {
                     "optim": optim.state_dict(),
                     "model": flow.state_dict()
                 }
-                print(f"Finished training {self.dataname} with B={epsilon}, repeat {r}")
+                print(f"Finished training {self.name_of_data} with B={auxiliary_dimension}, repeat {repeat}")
 
                 torch.save(checkpoint, "/".join(
-                    [self.current_test_folder, f"{self.dataname}_{epsilon}eps_{r}rep.p"]))
-        losses_filename = "/".join([self.current_test_folder, "loss_dict.p"])
+                    [self.folder, f"{self.name_of_data}_{auxiliary_dimension}eps_{repeat}rep.p"]))
+        losses_filename = "/".join([self.folder, "loss_dict.p"])
         pickle.dump(loss_dict, open(losses_filename, "wb"))
-        stop = time()
-        duration = stop - start
+        stop_time = time()
+        duration = stop_time - start_time
         print(duration, " seconds")
-        print(f"The results are stored in {self.current_test_folder}")
+        print(f"The results are stored in {self.folder}")
 
-
-    def bake_gaussian_models(self, eps, dims, pows, make_plots=False):
-        self.n_epsilons = eps
-        start = time()
+    def bake_gaussian_models(self, auxilliary_dimensons_list, gaussian_dims, gaussian_exponents, make_plots=False):
+        self.auxilliary_dimensons_list = auxilliary_dimensons_list
+        start_time = time()
         # Create a folder to store the test results
-        self.current_test_folder = make_top_folder(f"gaussian")
+        self.folder = make_folder_for_data(f"gaussian")
 
         # An object to hold all the losses, maps from tuple (distribution, epsilons) to ndarray(n_repeats, loss_observations)
         loss_dict = {}
@@ -83,41 +63,23 @@ class Baker:
         # An object to hold the models, maps from tuple (distribution, epsilons, repeat) to model
         model_dict = {}
 
-        # Files which make it easy to find the losses and the models
-        create_param_dict(self.current_test_folder,
-                          dims,
-                          pows,
-                          self.n_epsilons,
-                          self.n_repeats
-                          )
+        self.make_and_store_gaussian_param_dicts(auxilliary_dimensons_list, gaussian_dims, gaussian_exponents)
 
-        info_dict = \
-            {
-                "n_layers": self.n_layers,
-                "dataname": "GAUSS"
-            }
-        pickle.dump(info_dict, open(f"{self.current_test_folder}/info_dict.p", "wb"))
-
-        total_number_of_runs = len(dims) \
-                               * len(self.n_epsilons) \
-                               * len(self.n_repeats) \
-                               * len(pows)
-
-
-        for dim_i, gaussian_dim in enumerate(dims):
-            for eps_i, epsilon in enumerate(self.n_epsilons):
-                for pow_i, pow in enumerate(pows):
+        for dim_i, gaussian_dim in enumerate(gaussian_dims):
+            for eps_i, epsilon in enumerate(self.auxilliary_dimensons_list):
+                for pow_i, pow in enumerate(gaussian_exponents):
                     for rep in self.n_repeats:
-                        dataname = f"GAUSS_{gaussian_dim}dim_{pow}pow_{epsilon}eps_{rep}rep"
-                        print(f"Now going to train {dataname}")
+                        name_of_data = f"GAUSS_{gaussian_dim}dim_{pow}pow_{epsilon}eps_{rep}rep"
+                        print(f"Now going to train {name_of_data}")
                         dataset = get_gaussian_samples(self.n_samples, gaussian_dim, pow)
-                        flow = marginalizingFlow(N=gaussian_dim, M=epsilon, n_layers=self.n_layers)
+                        flow = marginalizingFlow(data_dimensions=gaussian_dim, auxiliary_dimensions=epsilon,
+                                                 n_layers=self.n_layers)
                         optim = torch.optim.Adam(flow.parameters(), lr=self.lr)
-                        trainer = Trainer()
-                        losses = trainer.train(self.device,net=flow, dataset=dataset, optim=optim, n_epochs=self.n_epochs,
-                                               batch_size=self.batch_size,
-                                               dataname=dataname,
-                                               make_plots=make_plots)
+                        losses = train(self.device, flow=flow, dataset=dataset, optim=optim,
+                                       n_epochs=self.n_epochs,
+                                       batch_size=self.batch_size,
+                                       name_of_data=name_of_data,
+                                       make_plots=make_plots)
 
                         loss_dict[(gaussian_dim, pow, epsilon, rep)] = losses
                         plt.plot(losses)
@@ -126,24 +88,53 @@ class Baker:
                             "optim": optim.state_dict(),
                             "model": flow.state_dict()
                         }
-                        print(f"Finished training {dataname}")
-                        torch.save(checkpoint, "/".join([self.current_test_folder,
-                                                         f"{dataname}.p"]))
+                        print(f"Finished training {name_of_data}")
+                        torch.save(checkpoint, "/".join([self.folder,
+                                                         f"{name_of_data}.p"]))
 
         # Plot the losses
         fig, ax = plt.subplots(1, 1)
-        lookback = 16
-        losses = [np.mean(losses[i:i + lookback]) for i in range(len(losses) - lookback)]
+        losses_lookback = 16
+        losses = [np.mean(losses[i:i + losses_lookback]) for i in range(len(losses) - losses_lookback)]
         ax.plot(losses)
 
-        models_filename = "/".join([self.current_test_folder, "model_dict.p"])
+        models_filename = "/".join([self.folder, "model_dict.p"])
         pickle.dump(model_dict, open(models_filename, "wb"))
-        losses_filename = "/".join([self.current_test_folder, "loss_dict.p"])
+        losses_filename = "/".join([self.folder, "loss_dict.p"])
         pickle.dump(loss_dict, open(losses_filename, "wb"))
 
         stop = time()
-        duration = stop - start
+        duration = stop - start_time
         print(duration, " seconds")
-        print(f"The results are stored in {self.current_test_folder}")
+        print(f"The results are stored in {self.folder}")
 
+    def make_and_store_param_dicts(self, clip_norm, noise):
+        model_param_dict = \
+            {
+                "n_layers": self.n_layers,
+                "dataname": self.name_of_data,
+                "noise": noise,
+                "clipNorm": clip_norm
+            }
+        pickle.dump(model_param_dict, open(f"{self.folder}/param_dict.p", "wb"))  # was info_dict.p
+        train_param_dict = \
+            {
+                "n_epsilons": self.auxilliary_dimensons_list,
+                "n_repeats": self.n_repeats,
+            }
+        pickle.dump(train_param_dict, open(f"{self.folder}/train_param_dict.p", "wb"))  # was param_dict.p
 
+    def make_and_store_gaussian_param_dicts(self, auxilliary_dimensons_list, gaussian_dims, gaussian_exponents):
+        model_param_dict = \
+            {
+                "n_layers": self.n_layers,
+                "dataname": "GAUSS"
+            }
+        pickle.dump(model_param_dict, open(f"{self.folder}/info_dict.p", "wb"))
+        train_param_dict = {
+            "n_gaussian_dims": gaussian_dims,
+            "gaussian_powers": gaussian_exponents,
+            "n_epsilons": auxilliary_dimensons_list,
+            "n_repeats": self.n_repeats
+        }
+        pickle.dump(train_param_dict, open(f"{self.folder}/param_dict.p", "wb"))  # Was param_dict.p

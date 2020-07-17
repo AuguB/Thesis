@@ -5,58 +5,55 @@ from builder import build_flow
 
 
 class marginalizingFlow(nn.Module):
-    def __init__(self, N, M, n_layers=4):
+    def __init__(self, data_dimensions, auxiliary_dimensions, n_layers=4):
         super(marginalizingFlow, self).__init__()
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-        self.N = N  # Dimension of original data
-        self.M = M  # Dimension of epsilon
-        self.Q = max(N + M, 2)  # Dimension of the flow (minimum two)
-        self.normalizingFlow = build_flow(self.Q, n_layers)
-        self.locs = nn.Parameter(torch.zeros(self.M).to(device), requires_grad=False)
-        self.cov = nn.Parameter(torch.diag(torch.ones(self.M).to(device)),requires_grad=False)
-        if self.M > 0:
-            self.eps = MultivariateNormal(self.locs,self.cov) # The distribution to sample epsilon
+        self.data_dimensions = data_dimensions  # Dimension of original data
+        self.auxiliary_dimensions = auxiliary_dimensions  # Dimension of epsilon
+        self.dimension_of_flows = max(data_dimensions + auxiliary_dimensions, 2)  # Dimension of the flow (minimum two)
+        self.normalizingFlow = build_flow(self.dimension_of_flows, n_layers)
+        if self.auxiliary_dimensions > 0:
+            self.mean_of_epsilon = nn.Parameter(torch.zeros(self.auxiliary_dimensions).to(device), requires_grad=False)
+            self.covariance_of_epsilon = nn.Parameter(torch.diag(torch.ones(self.auxiliary_dimensions).to(device)),
+                                                      requires_grad=False)
+            self.distribution_of_epsilon = MultivariateNormal(self.mean_of_epsilon,
+                                                              self.covariance_of_epsilon)
 
-    def forward(self, A, marginalize=False, n_samples=200):
-        if (not marginalize) or (self.M == 0):
-            A_epsilon, _ = self.add_epsilon(A)
-            return self.normalizingFlow(A_epsilon)
+    def forward(self, a, marginalize=False, n_samples=200):
+        if (not marginalize) or (self.auxiliary_dimensions == 0):
+            a_with_epsilon, _ = self.add_epsilon(a)
+            return self.normalizingFlow(a_with_epsilon)
         else:
             # An object to store the log likelihoods for many different epsilons
-            log_probs = torch.zeros((A.shape[0], n_samples))
+            log_prob_buffer = torch.zeros((a.shape[0], n_samples))
             for s in range(n_samples):
-                A_epsilon, epsilon_log_prob = self.add_epsilon(A)
-                log_prob, transformed = self.normalizingFlow(A_epsilon)
-                log_probs[:, s] = log_prob.clone().detach() - epsilon_log_prob
-            mean_log_probs = self.logmean(log_probs).clone().detach()
+                a_with_epsilon, log_prob_of_epsilon = self.add_epsilon(a)
+                log_prob, transformed = self.normalizingFlow(a_with_epsilon)
+                log_prob_buffer[:, s] = log_prob.clone().detach() - log_prob_of_epsilon
+            mean_log_probs = self.logmean(log_prob_buffer).clone().detach()
             return mean_log_probs, transformed  # Returns only the last transformation
 
-    def add_epsilon(self, A):
-        if self.N + self.M == 1:
-            return torch.cat([A, A], 1), 0  # If there is only one column, duplicate
-        elif self.M > 0:
-            sample = self.eps.sample((A.shape[0],))
-            return torch.cat([A, sample], 1), self.eps.log_prob(sample)  # Get new samples from epsilon
+    def add_epsilon(self, a):
+        if self.data_dimensions + self.auxiliary_dimensions == 1:
+            return torch.cat([a, a], 1), 0  # Flows require at least 2-D data
+        elif self.auxiliary_dimensions > 0:
+            epsilon_sample = self.distribution_of_epsilon.sample((a.shape[0],))
+            return torch.cat([a, epsilon_sample], 1), self.distribution_of_epsilon.log_prob(
+                epsilon_sample)  # Get new samples from epsilon
         else:
-            return A, 0
+            return a, 0
 
     # The log sum exp trick
     def logmean(self, log_probs):
-
-        max_logprob, ind = torch.max(log_probs, dim=1)
-        normed = log_probs - max_logprob.repeat((log_probs.shape[1], 1)).T
-        linear = torch.exp(normed)
-        mean = torch.mean(linear, dim=1)
-        log = torch.log(mean)
-        unnormed = log + max_logprob
-        return unnormed
-
-        # linear = torch.exp(log_probs)
-        # mean = torch.mean(linear)
-        # log = torch.log(mean)
-        # return log
+        log_prob_max, indices_of_max = torch.max(log_probs, dim=1)
+        normalized_log_probs = log_probs - log_prob_max.repeat((log_probs.shape[1], 1)).T
+        normalized_probs = torch.exp(normalized_log_probs)
+        mean_of_normalized_probs = torch.mean(normalized_probs, dim=1)
+        mean_of_normalized_log_probs = torch.log(mean_of_normalized_probs)
+        mean_of_log_probs = mean_of_normalized_log_probs + log_prob_max
+        return mean_of_log_probs
 
     # Only inverts, does not provide normalization
-    def inverse(self, A):
-        return self.normalizingFlow.inverse(A)
+    def inverse(self, a):
+        return self.normalizingFlow.inverse(a)

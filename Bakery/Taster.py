@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from Flows.marginalizingflow import marginalizingFlow
 from builder import get_gaussian_samples, build_px_samples
-from plotters import plot_backward
+from plotters import plot_and_store_backward_pass
 from utils import moving_average
 
 
@@ -17,114 +17,127 @@ def print_summary(iter, total_iter, conf, total_confs):
 
 
 class Taster:
-    def __init__(self, folder, gaussian=False):
+    def __init__(self, device, folder, taste_gaussian_models=False):
+        self.device = device
         self.folder = folder
         self.loss_dict = pickle.load(open(folder + "/loss_dict.p", "rb"))
-        self.param_dict = pickle.load(open(folder + "/param_dict.p", "rb"))
-        self.info_dict = pickle.load(open(folder + "/info_dict.p", "rb"))
-        self.gaussian = gaussian
-        if self.gaussian:
+        self.model_param_dict = pickle.load(open(folder + "/param_dict.p", "rb"))
+        self.train_param_dict = pickle.load(open(folder + "/info_dict.p", "rb"))
+        self.taste_gaussian_models = taste_gaussian_models
+        self.logli = None
+        self.logli_average_over_samples = None
+        self.logli_average_over_repeats = None
+        if self.taste_gaussian_models:
             self.model_state_dict_dict = pickle.load(open(folder + "/model_dict.p", "rb"))
 
     def plot_losses(self):
-        for tup in self.loss_dict.keys():
-            if self.gaussian:
-                title = f"GAUSS_{tup[0]}dim_{tup[1]}pow_{tup[2]}eps_{tup[3]}rep"
+        for param_tuple in self.loss_dict.keys():
+            if self.taste_gaussian_models:
+                name_of_model = f"GAUSS_{param_tuple[0]}dim_{param_tuple[1]}pow_{param_tuple[2]}eps_{param_tuple[3]}rep"
             else:
-                name = self.param_dict["dataname"]
-                title = f"{name}_{tup[0]}eps_{tup[1]}rep"
-            losses = self.loss_dict[tup]
+                name_of_data = self.model_param_dict["dataname"]
+                name_of_model = f"{name_of_data}_{param_tuple[0]}eps_{param_tuple[1]}rep"
+            losses_of_model = self.loss_dict[param_tuple]
             losses_lookback = 5
-            plt.plot(moving_average(losses, losses_lookback))
-            plt.title(title)
+            plt.plot(moving_average(losses_of_model, losses_lookback))
+            plt.title(name_of_model)
             plt.show()
 
-    def compute_neglogli(self, precomputed=False):
+    def compute_logli(self, precomputed=False):
         if not precomputed:
-            configs = itertools.product(*[zip([j for j in range(len(i))], i) for i in self.param_dict.values()])
-            total_configs = np.product([len(i) for i in self.param_dict.values()])
-            for ci, c in enumerate(configs):
-                if self.gaussian:
-                    n_importance_samples = 200
-                    n_datapoints = 2048
-                    perfs = np.zeros([len(i) for i in self.param_dict.values()] + [n_datapoints])
-                    ((i, dim), (j, pow), (k, eps), (l, rep)) = c
-                    model = self.get_model(c)
-                    data = get_gaussian_samples(n_datapoints, dim, pow)
-                    logli, _ = model(data.data, marginalize=True, n_samples=n_importance_samples)
-                    perfs[i, j, k, l, :logli.shape[0]] = logli.detach().numpy()
+            parameter_configurations_with_indices = itertools.product(
+                *[zip([j for j in range(len(i))], i) for i in self.model_param_dict.values()])
+            total_configs = np.product([len(i) for i in self.model_param_dict.values()])
+            for parameters_i, parameters in enumerate(parameter_configurations_with_indices):
+                if self.taste_gaussian_models:
+                    n_samples_from_epsilon = 200
+                    n_data_samples = 2048
+                    logli_buffer = np.zeros([len(i) for i in self.model_param_dict.values()] + [n_data_samples])
+                    ((i, dim), (j, pow), (k, eps), (batch_i, rep)) = parameters
+                    model = self.get_model(parameters)
+                    data = get_gaussian_samples(n_data_samples, dim,
+                                                pow).data   # Because the data is low-dim, we can do a forward pass on
+                                                            # the whole set at once, and we don't need dataloader.
+                                                            # That's why here the data is taken directly from the dataset.
+                    logli, _ = model(data.data, marginalize=True, n_samples=n_samples_from_epsilon)
+                    logli_buffer[i, j, k, batch_i, :logli.shape[0]] = logli.detach().numpy()
                 else:
                     # Unpack tuple with params and indices
-                    ((i, eps), (j, reps)) = c
+                    ((i, eps), (j, reps)) = parameters
 
                     # Get samples and construct loader
-                    n_importance_samples = self.get_importance_samples(self.info_dict["dataname"])
-                    data = build_px_samples(self.info_dict["dataname"])
-                    n_datapoints = data.data.shape[0]
+                    n_samples_from_epsilon = self.get_importance_samples(self.train_param_dict["dataname"])
+                    data = build_px_samples(self.train_param_dict["dataname"])
+                    n_data_samples = data.data.shape[0]
                     batch_size = 1024
                     loader = DataLoader(data, batch_size=batch_size)
                     total_iter = math.ceil(len(data) / batch_size)
 
                     # Construct array to hold perfs
-                    perfs = np.zeros([len(i) for i in self.param_dict.values()] + [n_datapoints])
+                    logli_buffer = np.zeros([len(i) for i in self.model_param_dict.values()] + [n_data_samples])
 
                     # Get model
-                    model = self.get_model(c)
+                    model = self.get_model(parameters)
 
                     # Compute performance by batch
-                    for l, v in enumerate(loader):
-                        print_summary(l, total_iter, ci, len(total_configs))
-                        c_logli, _ = model(v, marginalize=True, n_samples=n_importance_samples)
-                        perfs[i,j,l * batch_size:(l + 1) * batch_size] = c_logli.detach().numpy().copy()
+                    for batch_i, batch in enumerate(loader):
+                        batch = batch.to(self.device)
+                        print_summary(batch_i, total_iter, parameters_i, len(total_configs))
+                        current_logli, _ = model(batch, marginalize=True, n_samples=n_samples_from_epsilon)
+                        logli_buffer[i, j,
+                        batch_i * batch_size:(batch_i + 1) * batch_size] = current_logli.detach().cpu().numpy().copy()
 
-            pickle.dump(perfs, open(self.folder + "/perfs.p", "wb"))
+            pickle.dump(logli_buffer, open(self.folder + "/logli_buffer.p", "wb"))
 
-        self.perfs = pickle.load(open(self.folder + "/perfs.p", "rb"))
-        self.avg_logli_of_samples = np.log(np.exp(self.perfs).mean(axis=-1))
-        self.avg_logli_of_repeats = np.log(np.exp(self.avg_logli_of_samples).mean(axis=-1))
+        self.logli = pickle.load(open(self.folder + "/logli_buffer.p", "rb"))
+        self.logli_average_over_samples = np.log(np.exp(self.logli).mean(axis=-1))
+        self.logli_average_over_repeats = np.log(np.exp(self.logli_average_over_samples).mean(axis=-1))
 
-    def get_model(self, c):
-        if self.gaussian:
-            ((i, dim), (j, pow), (k, eps), (l, rep)) = c
-            title = f"GAUSS_{dim}dim_{pow}pow_{eps}eps_{rep}rep"
-            checkpoint = torch.load(self.folder + "/" + title + ".p")
-            model = marginalizingFlow(dim, eps, self.info_dict["n_layers"])
+    def get_model(self, parameters):
+        if self.taste_gaussian_models:
+            ((i, dim), (j, pow), (k, eps), (l, rep)) = parameters
+            name_of_model = f"GAUSS_{dim}dim_{pow}pow_{eps}eps_{rep}rep"
+            checkpoint = torch.load(self.folder + "/" + name_of_model + ".p")
+            model = marginalizingFlow(dim, eps, self.train_param_dict["n_layers"])
         else:
-            ((i, eps), (j, reps)) = c
-            name = self.info_dict["dataname"]
-            title = f"{name}_{eps}eps_{reps}rep"
-            checkpoint = torch.load(self.folder + "/" + title + ".p")
-            model = marginalizingFlow(self.get_dim(name), eps, self.info_dict["n_layers"])
+            ((i, eps), (j, reps)) = parameters
+            name = self.train_param_dict["dataname"]
+            name_of_model = f"{name}_{eps}eps_{reps}rep"
+            checkpoint = torch.load(self.folder + "/" + name_of_model + ".p")
+            model = marginalizingFlow(self.get_dim(name), eps, self.train_param_dict["n_layers"])
         model.load_state_dict(checkpoint["model"])
         model.eval()
+        model = model.to(self.device)
         return model
 
     def plot_avg_logli(self):
-        if not self.gaussian:
+        if not self.taste_gaussian_models:
             fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-            ax.plot(self.param_dict["n_epsilons"], self.avg_logli_of_repeats)
+            ax.plot(self.model_param_dict["n_epsilons"], self.logli_average_over_repeats)
             ax.set_xlabel("B")
             ax.set_ylabel("Log Likelihood")
-            if len(self.param_dict["n_repeats"]) > 1:  # plot confidence intervals
-                ci = 1.96 * np.abs(np.std(self.avg_logli_of_samples, axis=1) / np.sqrt(5))
-                ax.fill_between(self.param_dict["n_epsilons"], self.avg_logli_of_repeats + ci,
-                                self.avg_logli_of_repeats - ci, alpha=0.1)
+            if len(self.model_param_dict["n_repeats"]) > 1:  # plot confidence intervals
+                ci = 1.96 * np.abs(np.std(self.logli_average_over_samples, axis=1) / np.sqrt(5))
+                ax.fill_between(self.model_param_dict["n_epsilons"], self.logli_average_over_repeats + ci,
+                                self.logli_average_over_repeats - ci, alpha=0.1)
             plt.savefig(self.folder + "/average_logli.png")
             plt.show()
         else:
-            lineStyles = ["-", "--", "-."]
+            line_styles = ["-", "--", "-."]
             colors = ["black", "black", "black"]
-            for j, p in enumerate(self.param_dict["gaussian_powers"]):
+            for j, p in enumerate(self.model_param_dict["gaussian_powers"]):
                 fig, ax = plt.subplots(1, 1, figsize=(3.5, 3))
                 ax.set_title(f"ψ={p}")
-                for i, d in enumerate(self.param_dict["n_gaussian_dims"]):
-                    currentRange = self.avg_logli_of_repeats[i, j]
-                    currentRange_avgofsamples = self.avg_logli_of_samples[i, j]
-                    ci = 1.96 * np.abs(np.std(currentRange_avgofsamples, axis=-1) / np.sqrt(5))
-                    ax.plot(self.param_dict["n_epsilons"], currentRange, label=f"{d}-D", c=colors[i], alpha=1,
-                            lineStyle=lineStyles[i])
-                    if len(self.param_dict["n_repeats"]) > 1:
-                        ax.fill_between(self.param_dict["n_epsilons"], currentRange + ci, currentRange - ci,
+                for i, d in enumerate(self.model_param_dict["n_gaussian_dims"]):
+                    current_range_average_over_repeats = self.logli_average_over_repeats[i, j]
+                    current_range_average_over_samples = self.logli_average_over_samples[i, j]
+                    ci = 1.96 * np.abs(np.std(current_range_average_over_samples, axis=-1) / np.sqrt(5))
+                    ax.plot(self.model_param_dict["n_epsilons"], current_range_average_over_repeats, label=f"{d}-D",
+                            c=colors[i], alpha=1,
+                            lineStyle=line_styles[i])
+                    if len(self.model_param_dict["n_repeats"]) > 1:
+                        ax.fill_between(self.model_param_dict["n_epsilons"], current_range_average_over_repeats + ci,
+                                        current_range_average_over_repeats - ci,
                                         color=colors[i], alpha=0.1)
                 ax.set_xlabel("B")
                 ax.set_ylabel("Log Likelihood")
@@ -135,37 +148,39 @@ class Taster:
                 plt.show()
 
     def plot_min_logli(self):
-        if not self.gaussian:
+        if not self.taste_gaussian_models:
             fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-            ax.plot(self.param_dict["n_epsilons"], np.min(self.avg_logli_of_samples, axis=-1))
+            ax.plot(self.model_param_dict["n_epsilons"], np.min(self.logli_average_over_samples, axis=-1))
             ax.set_xlabel("B")
             ax.set_ylabel("Log Likelihood")
             plt.savefig(self.folder + "/min_logli.png")
             plt.show()
         else:
-            lineStyles = ["-", "--", "-."]
+            line_styles = ["-", "--", "-."]
             colors = ["black", "black", "black"]
-            for j, p in enumerate(self.param_dict["gaussian_powers"]):
+            for power_i, power in enumerate(self.model_param_dict["gaussian_powers"]):
                 fig, ax = plt.subplots(1, 1, figsize=(3.5, 3))
-                ax.set_title(f"ψ={p}")
-                for i, d in enumerate(self.param_dict["n_gaussian_dims"]):
-                    currentRange_avgofsamples = self.avg_logli_of_samples[i, j]
-                    ax.plot(self.param_dict["n_epsilons"], np.min(currentRange_avgofsamples, axis=-1), label=f"{d}-D",
-                            c=colors[i], alpha=1,
-                            lineStyle=lineStyles[i])
+                ax.set_title(f"ψ={power}")
+                for dim_i, dim in enumerate(self.model_param_dict["n_gaussian_dims"]):
+                    current_range_average_over_samples = self.logli_average_over_samples[dim_i, power_i]
+                    ax.plot(self.model_param_dict["n_epsilons"], np.min(current_range_average_over_samples, axis=-1),
+                            label=f"{dim}-D",
+                            c=colors[dim_i], alpha=1,
+                            lineStyle=line_styles[dim_i])
                 ax.set_xlabel("B")
                 ax.set_ylabel("Log Likelihood")
-                if j == 0:
+                if power_i == 0:
                     plt.legend()
                 plt.tight_layout()
                 plt.savefig(self.folder + "/min_logli.png")
                 plt.show()
 
     def generate(self):
-        configs = itertools.product(*[zip([j for j in range(len(i))], i) for i in self.param_dict.values()])
-        for c in configs:
+        parameter_configurations_with_indices = itertools.product(
+            *[zip([j for j in range(len(i))], i) for i in self.model_param_dict.values()])
+        for c in parameter_configurations_with_indices:
             model = self.get_model(c)
-            plot_backward(model, self.info_dict["dataname"])
+            plot_and_store_backward_pass(self.device, model, self.train_param_dict["dataname"])
 
     def get_importance_samples(self, a):
         if a.endswith("MNIST") or a.endswith("CIFAR10"):
@@ -175,9 +190,9 @@ class Taster:
 
     def get_dim(self, a):
         if a.endswith("MNIST"):
-            return 28*28
+            return 28 * 28
         elif a.endswith("CIFAR10"):
-            return 3*32*32
+            return 3 * 32 * 32
         elif a == "HALFMOONS":
             return 2
         else:

@@ -104,23 +104,9 @@ def toTorch(A):
     return torch.from_numpy(A).type("torch.FloatTensor")
 
 
-def make_top_folder(name=""):
-    current_test_folder = "/".join([project_folder, runs_folder,
-                                    f"{name}_{timecode()}"])
-    os.mkdir(current_test_folder)
-    return current_test_folder
+def make_folder_for_data(name_of_data=""):
+    folder_for_data = "/".join([project_folder, runs_folder,
+                                    f"{name_of_data}_{timecode()}"])
+    os.mkdir(folder_for_data)
+    return folder_for_data
 
-
-def create_param_dict(main_folder, n_gaussian_dims,
-                      gaussian_powers,
-                      n_epsilons,
-                      n_repeats
-                      ):
-    filename = "/".join([main_folder, "param_dict.p"])
-    dict = {
-        "n_gaussian_dims": n_gaussian_dims,
-        "gaussian_powers": gaussian_powers,
-        "n_epsilons": n_epsilons,
-        "n_repeats": n_repeats
-    }
-    pickle.dump(dict, open(filename, "wb"))

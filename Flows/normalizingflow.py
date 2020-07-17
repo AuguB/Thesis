@@ -6,43 +6,25 @@ class normalizingFlow(nn.Module):
     def __init__(self, modulelist, Q):
         super(normalizingFlow, self).__init__()
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.locs = torch.zeros(Q).to(device)
-        self.cov = torch.diag(torch.ones(Q)).to(device)
-        self.pu = MultivariateNormal(self.locs,self.cov)
-        self.parts = nn.ModuleList(modulelist) # a sequence of flows
-        self.Q = Q
+        self.mean_of_base_distribution = torch.zeros(Q).to(device)
+        self.covariance_of_base_distribution = torch.diag(torch.ones(Q)).to(device)
+        self.base_distribution = MultivariateNormal(self.mean_of_base_distribution, self.covariance_of_base_distribution)
+        self.component_flows = nn.ModuleList(modulelist) # a sequence of flows
+        self.dimension_of_flows = Q
 
-    def forward(self, A):
-
-        cumm_logdet = torch.zeros_like(A[:, 0])
-        for m in self.parts:
-            A, logdet = m(A)
+    def forward(self, a):
+        cumm_logdet = torch.zeros_like(a[:, 0])
+        for m in self.component_flows:
+            a, logdet = m(a)
             cumm_logdet += logdet
-        return self.pu.log_prob(A) + cumm_logdet, A
+        return self.base_distribution.log_prob(a) + cumm_logdet, a
 
-    def inverse(self, A):
+    def inverse(self, a):
         # TODO implement inverse log_p
-        parts = [i for i in self.parts]
-        for m in reversed(parts):
-            A = m.inverse(A)
-        return A
-
-    def self_evaluate(self, data, sample_size = 200):
-        with torch.no_grad():
-            sample_size = min(data.shape[0], sample_size)
-            sample_indices = torch.randperm(data.shape[0])[:sample_size]
-            sample = data[sample_indices]
-            log_prob, transformed_data = self.forward(sample)
-            log_prob = torch.mean(log_prob).detach().numpy()
-
-            mean = torch.mean(transformed_data, dim = 0)
-            C = transformed_data-mean
-            cov =  (C.T @ C) / (sample_size-1)
-            approximate_gaussian = torch.distributions.MultivariateNormal(loc = mean,covariance_matrix=cov)
-            true_gaussian = self.pu
-            kl_div = torch.distributions.kl_divergence(true_gaussian, approximate_gaussian).detach().numpy()
-
-            return log_prob, kl_div
+        list_of_components = [i for i in self.component_flows]
+        for component in reversed(list_of_components):
+            a = component.inverse(a)
+        return a
 
 
 
