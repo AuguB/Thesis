@@ -308,22 +308,22 @@ class Taster:
         repeat_index = 0
         target_index = 6
         fig, ax = plt.subplots(len(n_epsilons)+1, n_samples_per_epsilon, figsize= (15,10))
-        for epsilon_i, epsilon in enumerate(n_epsilons):
-            model = self.get_model(((epsilon_i,epsilon),(repeat_index,repeat_index)))
-            data = torch.randn((n_samples_per_epsilon,model.dimension_of_flows)).to(self.device)
-            inverse = model.inverse(data).detach().cpu().numpy()[:,:model.data_dimensions]
-            if mnist:
-                inverse_reshaped = inverse.reshape((n_samples_per_epsilon,28,28))
-            else:
-                inverse_reshaped = inverse.reshape((n_samples_per_epsilon,3,32,32))
-                inverse_reshaped = np.swapaxes(np.swapaxes(inverse_reshaped, 1,3),1,2)
-            for sample_i in range(n_samples_per_epsilon):
-                if mnist:
-                    ax[epsilon_i,sample_i].imshow(inverse_reshaped[sample_i], cmap="Greys")
-                else:
-                    ax[epsilon_i,sample_i].imshow(inverse_reshaped[sample_i])
-                ax[epsilon_i,sample_i].set_xticks([])
-                ax[epsilon_i,sample_i].set_yticks([])
+        # for epsilon_i, epsilon in enumerate(n_epsilons):
+        #     model = self.get_model(((epsilon_i,epsilon),(repeat_index,repeat_index)))
+        #     data = torch.randn((n_samples_per_epsilon,model.dimension_of_flows)).to(self.device)
+        #     inverse = model.inverse(data).detach().cpu().numpy()[:,:model.data_dimensions]
+        #     if mnist:
+        #         inverse_reshaped = inverse.reshape((n_samples_per_epsilon,28,28))
+        #     else:
+        #         inverse_reshaped = inverse.reshape((n_samples_per_epsilon,3,32,32))
+        #         inverse_reshaped = np.swapaxes(np.swapaxes(inverse_reshaped, 1,3),1,2)
+        #     for sample_i in range(n_samples_per_epsilon):
+        #         if mnist:
+        #             ax[epsilon_i,sample_i].imshow(inverse_reshaped[sample_i], cmap="Greys")
+        #         else:
+        #             ax[epsilon_i,sample_i].imshow(inverse_reshaped[sample_i])
+        #         ax[epsilon_i,sample_i].set_xticks([])
+        #         ax[epsilon_i,sample_i].set_yticks([])
         actual_data = build_px_samples(dataname).data
         random_indices = np.random.choice(actual_data.shape[0],n_samples_per_epsilon, replace = False)
         random_data = actual_data[random_indices]
@@ -331,7 +331,8 @@ class Taster:
             if mnist:
                 ax[target_index,index].imshow(data_point, cmap="Greys")
             else:
-                ax[target_index, index].imshow(np.swapaxes(np.swapaxes(data_point,1,3), 1,2))
+                print(data_point.shape)
+                ax[target_index, index].imshow(np.swapaxes(np.swapaxes(data_point,0,2), 1,2))
             ax[target_index, index].set_xticks([])
             ax[target_index, index].set_yticks([])
 
