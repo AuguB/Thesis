@@ -12,8 +12,7 @@ if __name__ == "__main__":
 
     #
     lovelace_runs_folder = "/home/s1003731/thesis/Thesis/Runs"
-    print("MNIST")
-    print()
+
 
 
     taster = Taster(device, f"{lovelace_runs_folder}/CIFAR10_2020-7-18_3:24:20")

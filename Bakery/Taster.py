@@ -316,7 +316,7 @@ class Taster:
                 inverse_reshaped = inverse.reshape((n_samples_per_epsilon,28,28))
             else:
                 inverse_reshaped = inverse.reshape((n_samples_per_epsilon,32,32,3))
-                # inverse_reshaped = np.swapaxes(np.swapaxes(inverse_reshaped, 1,3),1,2)
+                inverse_reshaped = np.swapaxes(np.swapaxes(inverse_reshaped, 1,3),1,2)
             for sample_i in range(n_samples_per_epsilon):
                 if mnist:
                     ax[epsilon_i,sample_i].imshow(inverse_reshaped[sample_i], cmap="Greys")
@@ -331,7 +331,6 @@ class Taster:
             if mnist:
                 ax[target_index,index].imshow(data_point, cmap="Greys")
             else:
-                print(data_point.shape)
                 ax[target_index, index].imshow(data_point)
             ax[target_index, index].set_xticks([])
             ax[target_index, index].set_yticks([])
