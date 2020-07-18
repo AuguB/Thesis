@@ -13,12 +13,13 @@ class marginalizingFlow(nn.Module):
         self.auxiliary_dimensions = auxiliary_dimensions  # Dimension of epsilon
         self.dimension_of_flows = max(data_dimensions + auxiliary_dimensions, 2)  # Dimension of the flow (minimum two)
         self.normalizingFlow = build_flow(self.dimension_of_flows, n_layers)
+        self.locs = nn.Parameter(torch.zeros(self.auxiliary_dimensions).to(device), requires_grad=False)
+        self.cov = nn.Parameter(torch.diag(torch.ones(self.auxiliary_dimensions).to(device)),
+                                requires_grad=False)
         if self.auxiliary_dimensions > 0:
-            self.mean_of_epsilon = nn.Parameter(torch.zeros(self.auxiliary_dimensions).to(device), requires_grad=False)
-            self.covariance_of_epsilon = nn.Parameter(torch.diag(torch.ones(self.auxiliary_dimensions).to(device)),
-                                                      requires_grad=False)
-            self.distribution_of_epsilon = MultivariateNormal(self.mean_of_epsilon,
-                                                              self.covariance_of_epsilon)
+
+            self.distribution_of_epsilon = MultivariateNormal(self.locs,
+                                                              self.cov)
 
     def forward(self, a, marginalize=False, n_samples=200):
         if (not marginalize) or (self.auxiliary_dimensions == 0):

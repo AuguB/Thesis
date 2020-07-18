@@ -116,13 +116,13 @@ class Baker:
                 "noise": noise,
                 "clipNorm": clip_norm
             }
-        pickle.dump(model_param_dict, open(f"{self.folder}/param_dict.p", "wb"))  # was info_dict.p
+        pickle.dump(model_param_dict, open(f"{self.folder}/info_dict.p", "wb"))  # was info_dict.p
         train_param_dict = \
             {
                 "n_epsilons": self.auxilliary_dimensons_list,
                 "n_repeats": self.n_repeats,
             }
-        pickle.dump(train_param_dict, open(f"{self.folder}/train_param_dict.p", "wb"))  # was param_dict.p
+        pickle.dump(train_param_dict, open(f"{self.folder}/param_dict.p", "wb"))  # was param_dict.p
 
     def make_and_store_gaussian_param_dicts(self, auxilliary_dimensons_list, gaussian_dims, gaussian_exponents):
         model_param_dict = \

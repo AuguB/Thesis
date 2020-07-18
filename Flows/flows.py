@@ -7,15 +7,15 @@ class shuffle(nn.Module):
         super(shuffle, self).__init__()
         self.flip = nn.Parameter(torch.tensor([flip]), requires_grad=False)
         if not self.flip:
-            self.permutation = nn.Parameter(torch.diag(torch.ones(dim))[torch.randperm(dim)], requires_grad=False)
+            self.P = nn.Parameter(torch.diag(torch.ones(dim))[torch.randperm(dim)], requires_grad=False)
         else:
-            self.permutation = nn.Parameter(torch.diag(torch.ones(dim)).flip(0), requires_grad=False)
+            self.P = nn.Parameter(torch.diag(torch.ones(dim)).flip(0), requires_grad=False)
 
     def forward(self, A):
-        return A @ self.permutation, 0.
+        return A @ self.P, 0.
 
     def inverse(self, A):
-        return A @ (self.permutation.T)
+        return A @ (self.P.T)
 
 
 class coupling(nn.Module):
@@ -46,13 +46,14 @@ class coupling(nn.Module):
         return output, torch.sum(scale, 1)
 
     def inverse(self, A):
-        first_half_in, first_half_out = A.split([self.dim_of_first_half, self.dim_of_second_half], 1)
+        first_half_in, second_half_in = A.split([self.dim_of_first_half, self.dim_of_second_half], 1)
         shift_and_scale = self.NN(first_half_in)
         shift, scale = shift_and_scale.split(self.dim_of_second_half, 1)
         first_half_out = first_half_in
-        first_half_in = (first_half_out - shift) * torch.exp(-scale)
-        output = torch.cat([first_half_out, first_half_in], 1)
+        second_half_out = (second_half_in - shift) * torch.exp(-scale)
+        output = torch.cat([first_half_out, second_half_out], 1)
         return output
+
 
 
 class actnorm(nn.Module):
