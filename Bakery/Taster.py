@@ -188,8 +188,52 @@ class Taster:
             self.generate_gaussian_forward_plot_matrix(plot_best_repeats)
         elif self.model_param_dict["dataname"] == "HALFMOONS":
             self.generate_halfmoons_forward_plot_matrix(plot_best_repeats)
-        elif self.model_param_dict["dataname"].endswith("MNIST"):
-            self.generate_MNIST_forward_plot_matrix(self.model_param_dict["dataname"])
+        else:
+            self.generate_image_forward_plot_matrix(self.model_param_dict["dataname"])
+
+
+    def get_importance_samples(self, a):
+        if a.endswith("MNIST") or a.endswith("CIFAR10"):
+            return 10
+        else:
+            return 200
+
+    def get_dim(self, a):
+        if a.endswith("MNIST"):
+            return 28 * 28
+        elif a.endswith("CIFAR10"):
+            return 3 * 32 * 32
+        elif a == "HALFMOONS":
+            return 2
+        else:
+            return 2
+
+    def get_sample_numbers(self):
+        data_name: str = self.model_param_dict["dataname"]
+        if self.taste_gaussian_models:
+            return 2048, 200
+        elif data_name == "HALFMOONS":
+            return 2048, 200
+        elif data_name.endswith("MNIST"):
+            return 60000, 100
+
+    def print_best_model_table(self):
+        if self.taste_gaussian_models:
+            print("\\psi&\tD&\tB=" + "&\t B=".join([str(i) for i in self.train_param_dict["n_epsilons"]]),
+                  end="\\\\\\hline\n")
+            for power_i, power in enumerate(self.train_param_dict["gaussian_powers"]):
+                for dim_i, dim in enumerate(self.train_param_dict["n_gaussian_dims"]):
+                    print(f"{power}&\t{dim}", end="")
+                    for epsilon_i, epsilon in enumerate(self.train_param_dict["n_epsilons"]):
+                        print(f"&\t{str(round(np.max(self.logli_average_over_samples[dim_i, power_i, epsilon_i]), 2))}",
+                              end="")
+
+                    print("\\\\", end="\\hline\n" if dim == 4 else "\n")
+        else:
+            print(f"B&\t"+"&\t".join([str(i) for i in self.train_param_dict["n_epsilons"]]),end = "\\\\\\hline\\hline\n")
+            highest_logli_per_repeat = np.max(self.logli_average_over_samples,axis=1)
+            print("Log-likelihood&\t"+"&\t".join([str(round(i,2)) for i in highest_logli_per_repeat]))
+        pass
 
     def generate_halfmoons_forward_plot_matrix(self, plot_best_repeats = True):
         num_samples = 5000
@@ -256,50 +300,8 @@ class Taster:
         plt.show()
         # Make a target plot
 
-    def get_importance_samples(self, a):
-        if a.endswith("MNIST") or a.endswith("CIFAR10"):
-            return 10
-        else:
-            return 200
-
-    def get_dim(self, a):
-        if a.endswith("MNIST"):
-            return 28 * 28
-        elif a.endswith("CIFAR10"):
-            return 3 * 32 * 32
-        elif a == "HALFMOONS":
-            return 2
-        else:
-            return 2
-
-    def get_sample_numbers(self):
-        data_name: str = self.model_param_dict["dataname"]
-        if self.taste_gaussian_models:
-            return 2048, 200
-        elif data_name == "HALFMOONS":
-            return 2048, 200
-        elif data_name.endswith("MNIST"):
-            return 60000, 100
-
-    def print_best_model_table(self):
-        if self.taste_gaussian_models:
-            print("\\psi&\tD&\tB=" + "&\t B=".join([str(i) for i in self.train_param_dict["n_epsilons"]]),
-                  end="\\\\\\hline\n")
-            for power_i, power in enumerate(self.train_param_dict["gaussian_powers"]):
-                for dim_i, dim in enumerate(self.train_param_dict["n_gaussian_dims"]):
-                    print(f"{power}&\t{dim}", end="")
-                    for epsilon_i, epsilon in enumerate(self.train_param_dict["n_epsilons"]):
-                        print(f"&\t{str(round(np.max(self.logli_average_over_samples[dim_i, power_i, epsilon_i]), 2))}",
-                              end="")
-
-                    print("\\\\", end="\\hline\n" if dim == 4 else "\n")
-        else:
-            print(f"B&\t"+"&\t".join([str(i) for i in self.train_param_dict["n_epsilons"]]),end = "\\\\\\hline\\hline\n")
-            highest_logli_per_repeat = np.max(self.logli_average_over_samples,axis=1)
-            print("Log-likelihood&\t"+"&\t".join([str(round(i,2)) for i in highest_logli_per_repeat]))
-        pass
-
-    def generate_MNIST_forward_plot_matrix(self, dataname):
+    def generate_image_forward_plot_matrix(self, dataname):
+        mnist = dataname == "MNIST"
         n_epsilons = self.train_param_dict["n_epsilons"]
         n_samples_per_epsilon = 10
         repeat_index = 0
@@ -308,20 +310,31 @@ class Taster:
         for epsilon_i, epsilon in enumerate(n_epsilons):
             model = self.get_model(((epsilon_i,epsilon),(repeat_index,repeat_index)))
             data = torch.randn((n_samples_per_epsilon,model.dimension_of_flows)).to(self.device)
-            inverse = model.inverse(data).detach().cpu().numpy()[:,:784]
-            inverse_reshaped = inverse.reshape((n_samples_per_epsilon,28,28))
+            inverse = model.inverse(data).detach().cpu().numpy()[:,:model.data_dimensions]
+            if mnist:
+                inverse_reshaped = inverse.reshape((n_samples_per_epsilon,28,28))
+            else:
+                inverse_reshaped = inverse.reshape((n_samples_per_epsilon,3,32,32))
+                inverse_reshaped = np.swapaxes(np.swapaxes(inverse_reshaped, 1,3),1,2)
             for sample_i in range(n_samples_per_epsilon):
-                ax[epsilon_i,sample_i].imshow(inverse_reshaped[sample_i], cmap="Greys")
+                if mnist:
+                    ax[epsilon_i,sample_i].imshow(inverse_reshaped[sample_i], cmap="Greys")
+                else:
+                    ax[epsilon_i,sample_i].imshow(inverse_reshaped[sample_i])
                 ax[epsilon_i,sample_i].set_xticks([])
                 ax[epsilon_i,sample_i].set_yticks([])
         actual_data = build_px_samples(dataname).data
         random_indices = np.random.choice(actual_data.shape[0],n_samples_per_epsilon, replace = False)
-        random_data = actual_data[random_indices]+(np.random.rand(n_samples_per_epsilon,28,28)-0.5)*0.3
+        random_data = actual_data[random_indices]
         for index, data_point in enumerate(random_data):
-            ax[target_index,index].imshow(data_point, cmap="Greys")
+            if mnist:
+                ax[target_index,index].imshow(data_point, cmap="Greys")
+            else:
+                ax[target_index, index].imshow(np.swapaxes(np.swapaxes(data_point,0,2), 0,1))
             ax[target_index, index].set_xticks([])
             ax[target_index, index].set_yticks([])
-        plt.subplots_adjust(wspace=0.001, hspace=0.001)
+
+        # plt.subplots_adjust(wspace=0.001, hspace=0.001)
 
         # plt.tight_layout()
         plt.savefig(f"{self.folder}/forward_plot_matrix.png")

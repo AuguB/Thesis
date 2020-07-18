@@ -15,30 +15,38 @@ if __name__ == "__main__":
     print("MNIST")
     print()
 
-    taster = Taster(device, f"{lovelace_runs_folder}/MNIST_2020-7-15_21:10:36")
-    # taster.compute_logli(precomputed=False)
-    # taster.print_best_model_table()
-    # taster.plot_max_logli()
+
+    taster = Taster(device, f"{lovelace_runs_folder}/CIFAR10_2020-7-18_3:24:20")
+    taster.compute_logli(precomputed=False)
+    taster.print_best_model_table()
+    taster.plot_max_logli()
     taster.generate()
-
-    print("FMNIST")
-    print()
-
-    taster = Taster(device, f"{lovelace_runs_folder}/FMNIST_2020-7-15_22:13:2")
-    # taster.compute_logli(precomputed=False)
-    # taster.print_best_model_table()
-    # taster.plot_max_logli()
-    taster.generate()
-
-    print("KMNIST")
-
-    print()
-
-    taster = Taster(device, f"{lovelace_runs_folder}/KMNIST_2020-7-15_23:16:37")
-    # taster.compute_logli(precomputed=False)
-    # taster.print_best_model_table()
-    # taster.plot_max_logli()
-    taster.generate()
+    #
+    #
+    # taster = Taster(device, f"{lovelace_runs_folder}/MNIST_2020-7-15_21:10:36")
+    # # taster.compute_logli(precomputed=False)
+    # # taster.print_best_model_table()
+    # # taster.plot_max_logli()
+    # taster.generate()
+    #
+    # print("FMNIST")
+    # print()
+    #
+    # taster = Taster(device, f"{lovelace_runs_folder}/FMNIST_2020-7-15_22:13:2")
+    # # taster.compute_logli(precomputed=False)
+    # # taster.print_best_model_table()
+    # # taster.plot_max_logli()
+    # taster.generate()
+    #
+    # print("KMNIST")
+    #
+    # print()
+    #
+    # taster = Taster(device, f"{lovelace_runs_folder}/KMNIST_2020-7-15_23:16:37")
+    # # taster.compute_logli(precomputed=False)
+    # # taster.print_best_model_table()
+    # # taster.plot_max_logli()
+    # taster.generate()
 
 
     # MNIST_baker = Baker(device,n_layers=4, n_epochs=10, batch_size=32, lr=5e-4)
