@@ -191,7 +191,6 @@ class Taster:
         else:
             self.generate_image_forward_plot_matrix(self.model_param_dict["dataname"])
 
-
     def get_importance_samples(self, a):
         if a.endswith("MNIST") or a.endswith("CIFAR10"):
             return 10
@@ -216,6 +215,8 @@ class Taster:
             return 2048, 200
         elif data_name.endswith("MNIST"):
             return 60000, 100
+        else:
+            return 50000,100
 
     def print_best_model_table(self):
         if self.taste_gaussian_models:
