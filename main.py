@@ -31,6 +31,7 @@ if __name__ == "__main__":
     taster.generate()
 
     print("KMNIST")
+
     print()
 
     taster = Taster(device, f"{lovelace_runs_folder}/KMNIST_2020-7-15_23:16:37")
