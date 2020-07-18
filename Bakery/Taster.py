@@ -331,7 +331,7 @@ class Taster:
             if mnist:
                 ax[target_index,index].imshow(data_point, cmap="Greys")
             else:
-                ax[target_index, index].imshow(np.swapaxes(np.swapaxes(data_point,0,2), 0,1))
+                ax[target_index, index].imshow(np.swapaxes(np.swapaxes(data_point,1,3), 1,2))
             ax[target_index, index].set_xticks([])
             ax[target_index, index].set_yticks([])
 

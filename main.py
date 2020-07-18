@@ -17,9 +17,9 @@ if __name__ == "__main__":
 
 
     taster = Taster(device, f"{lovelace_runs_folder}/CIFAR10_2020-7-18_3:24:20")
-    taster.compute_logli(precomputed=False)
-    taster.print_best_model_table()
-    taster.plot_max_logli()
+    # taster.compute_logli(precomputed=True)
+    # taster.print_best_model_table()
+    # taster.plot_max_logli()
     taster.generate()
     #
     #
