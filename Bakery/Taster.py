@@ -13,7 +13,7 @@ from utils import moving_average
 
 
 def print_summary(iter, total_iter, conf, total_confs):
-    print(f"\rNow evaluating model {conf}/{total_confs}, {100*iter / total_iter}%")
+    print(f"\rNow evaluating model {conf}/{total_confs}, {100*iter / total_iter}%", end="")
 
 
 class Taster:
@@ -279,7 +279,7 @@ class Taster:
         elif data_name == "HALFMOONS":
             return 2048, 200
         elif data_name.endswith("MNIST"):
-            return 60000, 50
+            return 60000, 100
 
     def print_best_model_table(self):
         if self.taste_gaussian_models:
