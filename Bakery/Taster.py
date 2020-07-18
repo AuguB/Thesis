@@ -335,7 +335,7 @@ class Taster:
             ax[target_index, index].set_xticks([])
             ax[target_index, index].set_yticks([])
 
-        # plt.subplots_adjust(wspace=0.001, hspace=0.001)
+        plt.subplots_adjust(wspace=0.001, hspace=0.001)
 
         # plt.tight_layout()
         plt.savefig(f"{self.folder}/forward_plot_matrix.png")
