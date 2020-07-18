@@ -324,7 +324,9 @@ class Taster:
         plt.subplots_adjust(wspace=0.001, hspace=0.001)
 
         # plt.tight_layout()
+        plt.savefig(f"{self.folder}/forward_plot_matrix_{indicator}.png")
+
         plt.show()
 
 
-        pass
+
