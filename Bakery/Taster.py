@@ -69,11 +69,13 @@ class Taster:
 
                 else:
                     # Unpack tuple with params and indices
+                    print(f"\rNow testing model {parameters_i} of {total_configs}    ", end="")
+
                     ((epsilon_i, epsilon), (repeat_i, repeat)) = parameters
 
                     data = build_px_samples(self.model_param_dict["dataname"])
                     data.data = data.data[:n_data_points]
-                    batch_size = n_data_points
+                    batch_size = 250
                     loader = DataLoader(data, batch_size=batch_size)
                     total_iter = math.ceil(len(data) / batch_size)
 
