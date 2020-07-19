@@ -12,7 +12,7 @@ if __name__ == "__main__":
         layers = 4 if i < 3 else 6
         noise = 0.15 if i < 3 else None
         baker = Baker(device, n_layers=layers, n_epochs=10, batch_size=128, lr=5e-4, n_repeats=10)
-        folder = baker.bake(i, [0, 1, 2, 4, 8, 16], noise, 0.6)
+        folder = baker.bake(v, [0, 1, 2, 4, 8, 16], noise, 0.6)
         taster = Taster(device, folder)
         taster.compute_logli(precomputed=False)
         taster.print_best_model_table()
