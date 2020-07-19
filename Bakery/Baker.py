@@ -17,7 +17,7 @@ class Baker:
         self.n_repeats = [i for i in range(n_repeats)]
         self.device = device
 
-    def bake(self, name_of_data, auxilliary_dimensons_list, noise=None, clip_norm=None, make_plots=False):
+    def bake(self, name_of_data, auxilliary_dimensons_list, noise=None, clip_norm=None, make_plots=False, print_status = False):
         self.name_of_data = name_of_data
         self.auxilliary_dimensons_list = auxilliary_dimensons_list
         self.folder = make_folder_for_data(f"{self.name_of_data}")
@@ -29,18 +29,19 @@ class Baker:
         data_dimensions = int(np.prod(data.data.shape[1:]))
         for auxiliary_dimension_i, auxiliary_dimension in enumerate(self.auxilliary_dimensons_list):
             for repeat in self.n_repeats:
+                repeat_start_time = time()
                 print(f"Now going to train {self.name_of_data} with B={auxiliary_dimension}, repeat {repeat}")
                 flow = marginalizingFlow(data_dimensions, auxiliary_dimension, n_layers=self.n_layers)
                 optim = torch.optim.Adam(flow.parameters(), lr=self.lr)
                 losses = train(self.device, flow=flow, dataset=data, optim=optim, n_epochs=self.n_epochs,
                                batch_size=self.batch_size,
-                               name_of_data=self.name_of_data, clip_norm=clip_norm, make_plots=make_plots)
+                               name_of_data=self.name_of_data, clip_norm=clip_norm, make_plots=make_plots, print_status = print_status)
                 loss_dict[(auxiliary_dimension, repeat)] = losses
                 checkpoint = {
                     "optim": optim.state_dict(),
                     "model": flow.state_dict()
                 }
-                print(f"Finished training {self.name_of_data} with B={auxiliary_dimension}, repeat {repeat}")
+                print(f"Finished training {self.name_of_data} with B={auxiliary_dimension}, repeat {repeat} in {time()-repeat_start_time} seconds")
 
                 torch.save(checkpoint, "/".join(
                     [self.folder, f"{self.name_of_data}_{auxiliary_dimension}eps_{repeat}rep.p"]))
@@ -50,6 +51,7 @@ class Baker:
         duration = stop_time - start_time
         print(duration, " seconds")
         print(f"The results are stored in {self.folder}")
+        return self.folder
 
     def bake_gaussian_models(self, auxilliary_dimensons_list, gaussian_dims, gaussian_exponents, make_plots=False):
         self.auxilliary_dimensons_list = auxilliary_dimensons_list

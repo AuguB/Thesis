@@ -7,7 +7,7 @@ from plotters import plot_and_store_backward_pass
 
 
 def train(device, flow, dataset, optim, n_epochs, name_of_data="MNIST", batch_size=1,
-          clip_norm: float = None, make_plots=False):
+          clip_norm: float = None, make_plots=False, print_status = False):
 
     flow = flow.to(device)
     list_of_losses = []
@@ -22,9 +22,10 @@ def train(device, flow, dataset, optim, n_epochs, name_of_data="MNIST", batch_si
         for current_batch_i, current_batch in enumerate(dataloader):
             current_iteration += 1
             current_batch = current_batch.to(device)
-            print(
-                f"\rTraining model on {name_of_data} {round(100 * (current_iteration / total_number_of_iterations), 2)}% complete   ",
-                end="")
+            if print_status:
+                print(
+                    f"\rTraining model on {name_of_data} {round(100 * (current_iteration / total_number_of_iterations), 2)}% complete   ",
+                    end="")
             log_prob_of_current_batch, _ = flow(current_batch)
             optim.zero_grad()
             loss = -log_prob_of_current_batch
