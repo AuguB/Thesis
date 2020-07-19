@@ -34,13 +34,13 @@ if __name__ == "__main__":
     # # taster.plot_max_logli()
     # taster.generate()
 
-    MNIST_baker = Baker(device, n_layers=4, n_epochs=10, batch_size=32, lr=5e-4, n_repeats=10)
+    MNIST_baker = Baker(device, n_layers=4, n_epochs=10, batch_size=256, lr=5e-4, n_repeats=10)
     MNIST_baker.bake("MNIST", [0, 1, 2, 4, 8, 16], 0.15, 0.6)
-    FMNIST_baker = Baker(device, n_layers=4, n_epochs=10, batch_size=32, lr=5e-4, n_repeats=10)
+    FMNIST_baker = Baker(device, n_layers=4, n_epochs=10, batch_size=256, lr=5e-4, n_repeats=10)
     FMNIST_baker.bake("FMNIST", [0, 1, 2, 4, 8, 16], 0.15, 0.6)
-    KMNIST_baker = Baker(device, n_layers=4, n_epochs=10, batch_size=32, lr=5e-4, n_repeats=10)
+    KMNIST_baker = Baker(device, n_layers=4, n_epochs=10, batch_size=256, lr=5e-4, n_repeats=10)
     KMNIST_baker.bake("KMNIST", [0, 1, 2, 4, 8, 16], 0.15, 0.6)
-    Cifar_baker = Baker(device, n_layers=6, n_epochs=16, batch_size=32, lr=5e-4, n_repeats=10)
+    Cifar_baker = Baker(device, n_layers=6, n_epochs=16, batch_size=256, lr=5e-4, n_repeats=10)
     Cifar_baker.bake("CIFAR10", [0, 1, 2, 4, 8, 16], clip_norm=0.6)
 
     # print("Finished")
