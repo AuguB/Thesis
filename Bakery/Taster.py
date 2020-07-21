@@ -313,7 +313,7 @@ class Taster:
         mnist = dataname.endswith("MNIST")
         n_epsilons = self.train_param_dict["n_epsilons"]
         n_samples_per_epsilon = 10
-        best_repeats = torch.argmax(self.logli_average_over_samples, dim=0)
+        best_repeats = np.argmax(self.logli_average_over_samples, dim=0)
         target_index = 6
         fig, ax = plt.subplots(len(n_epsilons)+1, n_samples_per_epsilon, figsize= (15,10))
         for epsilon_i, epsilon in enumerate(n_epsilons):
