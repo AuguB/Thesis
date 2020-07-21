@@ -5,22 +5,15 @@ import torch
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Going to train models on {device}")
-    t = Taster(device, "/home/s1003731/thesis/Thesis/Runs/FMNIST_2020-7-19_21:36:47")
-    t.compute_logli(precomputed=False)
-    t.print_best_model_table()
-    t.plot_max_logli()
-    t.generate()
+    lovelace_runs = "/home/s1003731/thesis/Thesis/Runs"
+    folders = ["CIFAR10_2020-7-21_0:10:34", "MNIST_2020-7-19_21:36:47", "KMNIST_2020-7-20_15:53:32",
+               "MNIST_2020-7-19_16:2:16"]
 
-    for i, v in enumerate(["KMNIST", "CIFAR10"]):
-        layers = 4 if i < 3 else 6
-        noise = 0.15 if i < 3 else None
-        baker = Baker(device, n_layers=layers, n_epochs=10, batch_size=128, lr=5e-4, n_repeats=10)
-        folder = baker.bake(v, [0, 1, 2, 4, 8, 16], noise, 0.6)
-        taster = Taster(device, folder)
-        taster.compute_logli(precomputed=False)
-        taster.print_best_model_table()
-        taster.plot_max_logli()
-        taster.generate()
+    for f in folders:
+        t = Taster(device, f"{lovelace_runs}/{f}")
+        t.compute_logli(precomputed=True)
+        t.plot_avg_logli()
+        t.generate()
 
     # print("Finished")
     # print("You can either bake some new models, or evaluate some old models")

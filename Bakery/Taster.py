@@ -124,7 +124,9 @@ class Taster:
                 ci = 1.96 * np.abs(np.std(self.logli_average_over_samples, axis=1) / np.sqrt(5))
                 ax.fill_between(self.train_param_dict["n_epsilons"], self.logli_average_over_repeats + ci,
                                 self.logli_average_over_repeats - ci, alpha=0.1)
-            plt.savefig(self.folder + "/average_logli.png")
+            name = self.model_param_dict["dataname"]
+
+            plt.savefig(self.folder + f"/{name}_average_logli.png")
             plt.show()
         else:
             line_styles = ["-", "--", "-."]
@@ -149,7 +151,9 @@ class Taster:
                 if j == 0:
                     plt.legend()
                 plt.tight_layout()
-                plt.savefig(self.folder + f"/average_logli{p}.png")
+                name = self.model_param_dict["dataname"]
+
+                plt.savefig(self.folder + f"/{name}average_logli{p}.png")
                 plt.show()
 
     def plot_max_logli(self):
@@ -160,7 +164,9 @@ class Taster:
             ax.set_ylabel("Log Likelihood")
             ax.set_xticks(self.train_param_dict["n_epsilons"])
             plt.tight_layout()
-            plt.savefig(self.folder + "/max_logli.png")
+            name = self.model_param_dict["dataname"]
+
+            plt.savefig(self.folder + f"/{name}_max_logli.png")
             plt.show()
         else:
             line_styles = ["-", "--", "-."]
@@ -180,7 +186,8 @@ class Taster:
                     plt.legend()
                 # plt.tight_layout()
                 plt.xticks([str(i) for i in self.train_param_dict["n_epsilons"]])
-                plt.savefig(self.folder + f"/max_logli{power}.png")
+                name = self.model_param_dict["dataname"]
+                plt.savefig(self.folder + f"/{name}_max_logli{power}.png")
                 plt.show()
 
     def generate(self, plot_best_repeats = True):
@@ -296,8 +303,9 @@ class Taster:
             ax[power_i, index_of_target_plot].set_title(f"Target for ψ={power}")
         plt.tight_layout()
         indicator = "best" if plot_best_repeats else "worst"
+        name = self.model_param_dict["dataname"]
 
-        plt.savefig(f"{self.folder}/forward_plot_matrix_{indicator}.png")
+        plt.savefig(f"{self.folder}/{name}_forward_plot_matrix_{indicator}.png")
         plt.show()
         # Make a target plot
 
@@ -305,11 +313,11 @@ class Taster:
         mnist = dataname.endswith("MNIST")
         n_epsilons = self.train_param_dict["n_epsilons"]
         n_samples_per_epsilon = 10
-        repeat_index = 0
+        best_repeats = torch.argmax(self.logli_average_over_samples, dim=0)
         target_index = 6
         fig, ax = plt.subplots(len(n_epsilons)+1, n_samples_per_epsilon, figsize= (15,10))
         for epsilon_i, epsilon in enumerate(n_epsilons):
-            model = self.get_model(((epsilon_i,epsilon),(repeat_index,repeat_index)))
+            model = self.get_model(((epsilon_i,epsilon),(best_repeats[epsilon_i],best_repeats[epsilon_i])))
             data = torch.randn((n_samples_per_epsilon,model.dimension_of_flows)).to(self.device)
             inverse = model.inverse(data).detach().cpu().numpy()[:,:model.data_dimensions]
             if mnist:
@@ -338,7 +346,9 @@ class Taster:
         plt.subplots_adjust(wspace=0.001, hspace=0.001)
 
         plt.tight_layout()
-        plt.savefig(f"{self.folder}/forward_plot_matrix.png")
+        name = self.model_param_dict["dataname"]
+
+        plt.savefig(f"{self.folder}/{name}_forward_plot_matrix.png")
 
         plt.show()
 
