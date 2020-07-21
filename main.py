@@ -9,11 +9,14 @@ if __name__ == "__main__":
     folders = ["CIFAR10_2020-7-21_0:10:34", "MNIST_2020-7-19_21:36:47", "KMNIST_2020-7-20_15:53:32",
                "MNIST_2020-7-19_16:2:16"]
 
-    for f in folders:
+    for i,f in enumerate(folders):
         t = Taster(device, f"{lovelace_runs}/{f}")
         t.compute_logli(precomputed=True)
+        print("test1.0")
         t.plot_avg_logli()
+        print("test1.1")
         t.generate()
+        print("test1.2")
 
     # print("Finished")
     # print("You can either bake some new models, or evaluate some old models")

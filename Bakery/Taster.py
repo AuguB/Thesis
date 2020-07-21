@@ -125,7 +125,6 @@ class Taster:
                 ax.fill_between(self.train_param_dict["n_epsilons"], self.logli_average_over_repeats + ci,
                                 self.logli_average_over_repeats - ci, alpha=0.1)
             name = self.model_param_dict["dataname"]
-
             plt.savefig(self.folder + f"/{name}_average_logli.png")
             plt.show()
         else:
