@@ -57,7 +57,7 @@ class marginalizingFlow(nn.Module):
         mean_of_normalized_probs = np.mean(normalized_probs, axis=1)
         mean_of_normalized_log_probs = np.log(mean_of_normalized_probs)
         mean_of_log_probs = mean_of_normalized_log_probs + log_prob_max
-        return torch.from_numpy(mean_of_log_probs).to(device)
+        return torch.from_numpy(mean_of_log_probs.astype(np.float64)).to(device)
 
     # Only inverts, does not provide normalization
     def inverse(self, a):
