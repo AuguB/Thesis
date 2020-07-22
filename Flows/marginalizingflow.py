@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import nn
 from torch.distributions import MultivariateNormal
@@ -47,13 +48,15 @@ class marginalizingFlow(nn.Module):
 
     # The log sum exp trick
     def logmean(self, log_probs):
-        log_prob_max, indices_of_max = torch.max(log_probs, dim=1)
-        normalized_log_probs = log_probs - log_prob_max.repeat((log_probs.shape[1], 1)).T
-        normalized_probs = torch.exp(normalized_log_probs)
-        mean_of_normalized_probs = torch.mean(normalized_probs, dim=1)
-        mean_of_normalized_log_probs = torch.log(mean_of_normalized_probs)
+        device = log_probs.device
+        np_logprobs = log_probs.detach().cpu().numpy().astype(np.float128)
+        log_prob_max, indices_of_max = np.max(np_logprobs, axis=1)
+        normalized_log_probs = log_probs - np.repeat(log_prob_max,(log_probs.shape[1], 1)).T
+        normalized_probs = np.exp(normalized_log_probs)
+        mean_of_normalized_probs = np.mean(normalized_probs, axis=1)
+        mean_of_normalized_log_probs = np.log(mean_of_normalized_probs)
         mean_of_log_probs = mean_of_normalized_log_probs + log_prob_max
-        return mean_of_log_probs
+        return torch.from_numpy(mean_of_log_probs).to(device)
 
     # Only inverts, does not provide normalization
     def inverse(self, a):

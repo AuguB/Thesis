@@ -12,14 +12,15 @@ if __name__ == "__main__":
 
     for i,f in enumerate(folders):
         t = Taster(device, f"{speedy_runs}/{f}")
-        t.compute_logli(precomputed=True)
+        t.compute_logli(precomputed=False)
         print("test1.0")
-        # t.plot_avg_logli()
+        t.plot_avg_logli()
         t.plot_max_logli()
         t.print_best_model_table()
         print("test1.1")
         # t.generate()
         print("test1.2")
+
 
     # print("Finished")
     # print("You can either bake some new models, or evaluate some old models")
