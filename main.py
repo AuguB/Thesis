@@ -3,14 +3,15 @@ from Bakery.Taster import Taster
 import torch
 
 if __name__ == "__main__":
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Going to train models on {device}")
-    lovelace_runs = "/home/s1003731/thesis/Thesis/Runs"
+    # lovelace_runs = "/home/s1003731/thesis/Thesis/Runs"
+    speedy_runs = "/home/guus/Thesis"
     folders = ["CIFAR10_2020-7-21_0:10:34", "MNIST_2020-7-19_21:36:47", "KMNIST_2020-7-20_15:53:32",
                "MNIST_2020-7-19_16:2:16"]
 
     for i,f in enumerate(folders):
-        t = Taster(device, f"{lovelace_runs}/{f}")
+        t = Taster(device, f"{speedy_runs}/{f}")
         t.compute_logli(precomputed=True)
         print("test1.0")
         t.plot_avg_logli()
