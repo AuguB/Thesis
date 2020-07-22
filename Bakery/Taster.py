@@ -222,9 +222,9 @@ class Taster:
         elif data_name == "HALFMOONS":
             return 2048, 200
         elif data_name.endswith("MNIST"):
-            return 60000, 3
+            return 60000, 100
         else:
-            return 50000,3
+            return 50000,100
 
     def print_best_model_table(self):
         if self.taste_gaussian_models:
