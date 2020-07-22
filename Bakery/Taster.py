@@ -92,7 +92,8 @@ class Taster:
 
             pickle.dump(logli_buffer, open(self.folder + "/logli_buffer.p", "wb"))
 
-        self.logli = pickle.load(open(self.folder + "/logli_buffer.p", "rb"))
+        self.logli = pickle.load(open(self.folder + "/logli_buffer.p", "rb")).astype("np.float_")
+
         self.logli_average_over_samples = np.log(np.exp(self.logli).mean(axis=-1))
         self.logli_average_over_repeats = np.log(np.exp(self.logli_average_over_samples).mean(axis=-1))
 
