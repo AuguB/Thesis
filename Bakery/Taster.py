@@ -239,6 +239,8 @@ class Taster:
 
                     print("\\\\", end="\\hline\n" if dim == 4 else "\n")
         else:
+            name  = self.model_param_dict["dataname"]
+            print(f"Best models on {name}")
             print(f"B&\t"+"&\t".join([str(i) for i in self.train_param_dict["n_epsilons"]]),end = "\\\\\\hline\\hline\n")
             highest_logli_per_repeat = np.max(self.logli_average_over_samples,axis=1)
             print("Log-likelihood&\t"+"&\t".join([str(round(i,2)) for i in highest_logli_per_repeat]))
