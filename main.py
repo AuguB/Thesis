@@ -18,7 +18,7 @@ if __name__ == "__main__":
         t.plot_max_logli()
         t.print_best_model_table()
         print("test1.1")
-        t.generate()
+        # t.generate()
         print("test1.2")
 
     # print("Finished")
