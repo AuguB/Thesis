@@ -50,7 +50,7 @@ class marginalizingFlow(nn.Module):
     def logmean(self, log_probs):
         device = log_probs.device
         np_logprobs = log_probs.detach().cpu().numpy().astype(np.float128)
-        log_prob_max, indices_of_max = np.max(np_logprobs, axis=1)
+        log_prob_max = np.max(np_logprobs, axis=1)
         normalized_log_probs = log_probs - np.repeat(log_prob_max,(log_probs.shape[1], 1)).T
         normalized_probs = np.exp(normalized_log_probs)
         mean_of_normalized_probs = np.mean(normalized_probs, axis=1)
